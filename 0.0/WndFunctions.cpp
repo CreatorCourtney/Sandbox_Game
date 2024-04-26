@@ -50,10 +50,12 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
     MSG msg = { };
     while (GetMessage(&msg, NULL, 0, 0) > 0)
     {
+        // sets the cursor
         SetCursor(cursor);
         // update DeltaTime
         Globals::deltaTime = Math::DeltaTime(&Globals::begin_time);
 
+        // update all current game objects
         for (int i = 0; i < Globals::gameObjects.size(); i++) {
             Globals::gameObjects[i]->update();
         }
@@ -84,7 +86,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             int newWidth = LOWORD(lParam), newHeight = HIWORD(lParam);
             Globals::wndWidth = newWidth; Globals::wndHeight = newHeight;
 
-            // recreate hOffscreenBitmap
+            // recreate hOffscreenBitmap to fit new screen size
             HBITMAP hNewBitmap = CreateCompatibleBitmap(Globals::g_hdc, newWidth, newHeight);
             if (hNewBitmap != NULL) {
                 SelectObject(Globals::hOffscreenDC, hNewBitmap);

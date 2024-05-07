@@ -237,6 +237,7 @@ namespace Frame
             overlayBrush = new Gdiplus::TextureBrush(overlay);
             overlayBrush->SetWrapMode(Gdiplus::WrapModeClamp);
         }
+        numObjectsinOverlay++;
     }
 
     // for convenience
@@ -260,6 +261,7 @@ namespace Frame
         Gdiplus::Graphics graphics(overlay);
         // clear the existing overlay
         graphics.Clear(Gdiplus::Color::Transparent);
+        numObjectsinOverlay = 0;
 
         // draw remaining trees back onto the overlay
         int nx = grid.size(), ny = grid[0].size();
@@ -296,8 +298,10 @@ namespace Frame
         placeText(10, yPos, posTxt, white, 10, graphics); yPos += 15;
 
         // entity count
-        std::wstring entityTxt = L"num entities: " +
-            std::to_wstring(gameObjects.size());
+        std::wstring entityTxt = L"num entities: "+std::to_wstring(gameObjects.size());
+        placeText(10, yPos, entityTxt, white, 10, graphics); yPos += 15;
+        // tree count
+        entityTxt = L"num objects in overlay: "+std::to_wstring(numObjectsinOverlay);
         placeText(10, yPos, entityTxt, white, 10, graphics); yPos += 15;
 
         // debug tools

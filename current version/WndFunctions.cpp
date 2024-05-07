@@ -17,8 +17,8 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
     // spawn a wolf for testing
     Globals::gameObjects.push_back(new Object::GameObject(
         Math::Vector2(200.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
-        Object::Wolf, Math::Point2(75*Globals::g_scale, 75*Globals::g_scale),
-        50.0f*Globals::g_scale, 5
+        Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
+        100.0f*Globals::g_scale, 5
     ));
 
     Globals::SetGrid();

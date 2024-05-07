@@ -62,7 +62,7 @@ namespace Globals {
 
     Object::GameObject * player;
     std::vector<Object::GameObject*> gameObjects;
-    std::vector<Object::GameObject*> trees; // for static objects, to be drawn over those in gameObjects
+    int numObjectsinOverlay = 0;
     CellObject selectedObj = LOG;
 
     Gdiplus::Bitmap * createEmptyBitmap(int width, int height);

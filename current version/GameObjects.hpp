@@ -8,6 +8,7 @@
 
 #include "GameMath.hpp"
 #include "Globals.hpp"
+#include "FrameCreation.hpp"
 
 // cell types
 /* BYTE DECOMPOSITION:
@@ -43,7 +44,7 @@ namespace Object
         Player, // 0
         Wolf    // 1
     };
-    
+
     class Animations {
     public:
         std::vector<Gdiplus::TextureBrush*> front;
@@ -67,6 +68,7 @@ namespace Object
     class GameObject {
     public:
         Math::Vector2 pos;
+        Math::Vector2 centrePos;
         Math::Vector2 velocity;
         EntityType type;
         // object's health
@@ -91,6 +93,8 @@ namespace Object
         Animations animations;
         Gdiplus::Matrix * brushMultMatrix;
         Math::Point2 srcDimensions;
+        // X,Y = number of cells, Width/Height = step for collision detection
+        Gdiplus::Rect cellularDimensions;
     };
 
     Math::Point2 findCell(Math::Vector2 pos);

@@ -14,15 +14,14 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
     ));
     Globals::player = Globals::gameObjects[0];
 
+    Globals::SetGrid();
+
     // spawn a wolf for testing
     Globals::gameObjects.push_back(new Object::GameObject(
         Math::Vector2(200.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
-        Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
+        Object::Wolf, Math::Point2(150*Globals::g_scale, 150*Globals::g_scale),
         100.0f*Globals::g_scale, 5
     ));
-
-    Globals::SetGrid();
-
 
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
 
@@ -146,6 +145,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 case VK_F7:
                     Globals::player->hasCollision = !Globals::player->hasCollision;
+                    break;
+                case VK_F6:
+                    Globals::showHitboxes = !Globals::showHitboxes;
                     break;
             } break;
 

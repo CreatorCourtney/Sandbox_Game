@@ -310,5 +310,7 @@ namespace Frame
         (debugMoveSpeedBoost)? red : white, 10, graphics); yPos += 15;
         placeText(10, yPos, L"press F7 to toggle noclip", 
         (player->hasCollision)? white : red, 10, graphics); yPos += 15;
+        placeText(10, yPos, L"press F6 to toggle hitboxes",
+        (showHitboxes)? red : white, 10, graphics); yPos += 15;
     }
 }

@@ -23,7 +23,7 @@ namespace Globals {
     float deltaTime = 0.0f;
     int prevFPS = 0;
     bool gameIsPaused = 0;
-    bool showDebugInfo = true;
+    bool showDebugInfo = true, showHitboxes = true;
     bool debugMoveSpeedBoost = false;
 
     unsigned char inputKeys = 0; // 000Swasd

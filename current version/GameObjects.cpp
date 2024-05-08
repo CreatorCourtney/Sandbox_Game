@@ -21,12 +21,16 @@ namespace Object
     GameObject::GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
     EntityType Type, Math::Point2 Size, float Speed, int Hp)
     : pos(Pos), velocity(Velocity), type(Type), size(Size), speed(Speed), hp(Hp) {
+        centrePos = pos + Math::Vector2(size.x/2, size.y/2);
+
         switch (type)
         {
             case Player:
                 animations = playerAnimations;
                 hasCollision = true;
                 srcDimensions = {25, 25};
+
+                cellularDimensions = {1, 1, size.x, size.y};
                 break;
 
             case Wolf:
@@ -39,6 +43,13 @@ namespace Object
         float   scaleX = (float)size.x/(float)srcDimensions.x, 
                 scaleY = (float)size.y/(float)srcDimensions.y;
         brushMultMatrix = new Gdiplus::Matrix(scaleX, 0.0f, 0.0f, scaleY, 0.0f, 0.0f);
+
+        if (Type != Player) {
+            int numX = size.x/sideLen+1, numY = size.y/sideLen+1,
+                stepX = (float)size.x/(float)numX, stepY = (float)size.y/(float)numY;
+
+            cellularDimensions = {numX, numY, stepX, stepY};
+        }
 
         // preemptively set the brushes so that they don't wrap, thus drawing the image only once
         if (hasAnimation) {
@@ -71,6 +82,47 @@ namespace Object
         imgBrush->SetTransform(&matrix);
         imgBrush->MultiplyTransform(brushMultMatrix);
         graphics.FillRectangle(imgBrush, screenPos.x, screenPos.y, size.x, size.y);
+
+        // debugging tools
+        if (showDebugInfo && showHitboxes) {
+            int dotSize = 6;
+            Math::Point2 centreScreenPos = Math::Point2(screenPos.x+size.x/2, screenPos.y+size.y/2);
+            Gdiplus::SolidBrush redBrush(red), blueBrush(blue);
+
+            graphics.DrawRectangle(new Gdiplus::Pen(blue), screenPos.x, screenPos.y, size.x, size.y);
+
+            // top side
+            for (int i = 1; i < cellularDimensions.X; i++) {
+                int x = screenPos.x+cellularDimensions.Width*i-dotSize/2,
+                    y = screenPos.y-dotSize/2;
+                graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
+            }
+            // bottom side
+            for (int i = 0; i <= cellularDimensions.X; i++) {
+                int x = screenPos.x+cellularDimensions.Width*i-dotSize/2,
+                    y = screenPos.y+size.y-dotSize/2;
+                graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
+            }
+            // left side
+            for (int i = 0; i < cellularDimensions.Y; i++) {
+                int y = screenPos.y+cellularDimensions.Height*i-dotSize/2,
+                    x = screenPos.x-dotSize/2;
+                graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
+            }
+            // right side
+            for (int i = 0; i < cellularDimensions.Y; i++) {
+                int y = screenPos.y+cellularDimensions.Height*i-dotSize/2,
+                    x = screenPos.x+size.x-dotSize/2;
+                graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
+            }
+            graphics.FillEllipse(&blueBrush, centreScreenPos.x-dotSize/2, centreScreenPos.y-dotSize/2, dotSize, dotSize);
+            
+            // std::wstring txt = L"cells: "+std::to_wstring(cellularDimensions.X)+
+            // L", "+std::to_wstring(cellularDimensions.Y);
+            // Frame::placeText(screenPos.x, screenPos.y, txt, white, 9, graphics);
+            // txt = std::to_wstring(cellularDimensions.Width)+L", "+std::to_wstring(cellularDimensions.Height);
+            // Frame::placeText(screenPos.x, screenPos.y+10, txt, white, 9, graphics);
+        }
     }
 
     void GameObject::update() {
@@ -101,7 +153,7 @@ namespace Object
             }
 
             case Wolf: { // walk directly towards player
-                Math::Vector2 dir = Math::getUnitVector(pos, player->pos);
+                Math::Vector2 dir = Math::getUnitVector(centrePos, player->centrePos);
                 velocity = dir * speed;
                 break;
             }
@@ -112,6 +164,7 @@ namespace Object
 
     void GameObject::updatePosition() {
         pos = pos + (velocity * deltaTime);
+        centrePos = pos + Math::Vector2(size.x/2, size.y/2);
     }
 
     void GameObject::handleCollisions() {
@@ -121,8 +174,34 @@ namespace Object
         else if (pos.x>bkgWidth-size.x) pos.x = bkgWidth-size.x-1.0f;
         if (pos.y<0.0f) pos.y = 0.0f;
         else if (pos.y>bkgHeight-size.y) pos.y = bkgHeight-size.y-1.0f;
-        
-        // walls
+
+        // walls        
+        // top side, move down
+        for (int i = 1; i < cellularDimensions.X; i++) {
+            Math::Vector2 node(pos.x+cellularDimensions.Width*i, pos.y);
+            Math::Point2 p = findCell(node);
+            if (grid[p.x][p.y]&BARRIER) pos.y = (p.y+1)*sideLen;
+        }
+        // bottom side, move up
+        for (int i = 1; i < cellularDimensions.X; i++) {
+            Math::Vector2 node(pos.x+cellularDimensions.Width*i, pos.y+size.y);
+            Math::Point2 p = findCell(node);
+            if (grid[p.x][p.y]&BARRIER) pos.y = p.y*sideLen - size.y;
+        }
+        // left side, move right
+        for (int i = 1; i < cellularDimensions.X; i++) {
+            Math::Vector2 node(pos.x, pos.y+cellularDimensions.Height*i);
+            Math::Point2 p = findCell(node);
+            if (grid[p.x][p.y]&BARRIER) pos.x = (p.x+1)*sideLen;
+        }
+        // right side, move left
+        for (int i = 1; i < cellularDimensions.X; i++) {
+            Math::Vector2 node(pos.x+size.y, pos.y+cellularDimensions.Height*i);
+            Math::Point2 p = findCell(node);
+            if (grid[p.x][p.y]&BARRIER) pos.x = p.x*sideLen - size.x;
+        }
+
+        // corners
         Math::Vector2 disp = Math::Zero2;
         Math::Point2 p = findCell(pos); // top left
         if (grid[p.x][p.y]&BARRIER) 

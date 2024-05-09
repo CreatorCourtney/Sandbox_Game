@@ -36,6 +36,8 @@ namespace Math
 
     float minf(float a, float b);
     float maxf(float a, float b);
+    int Max(int a, int b);
+    void handleCollisionsWithGameObjects();
     float absf(float a);
     float clampf(float min, float max, float x);
 }

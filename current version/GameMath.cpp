@@ -68,6 +68,9 @@ namespace Math
     float maxf(float a, float b) {
         return (a>b)? a : b;
     }
+    int Max(int a, int b) {
+        return (a>b)? a : b;
+    }
 
     float absf(float a) {
         return (a<0.0f)? -a : a;

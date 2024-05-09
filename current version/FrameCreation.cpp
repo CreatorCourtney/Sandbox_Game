@@ -343,7 +343,6 @@ namespace Frame
         Math::Vector2 o(cell.x*sideLen, cell.y*sideLen);
         Math::Point2 p = Object::getScreenPosition(o);
         if (p.x<-sideLen||p.x>wndWidth||p.y<-sideLen||p.y>wndHeight) return;
-        graphics.FillRectangle(&cellBrush, Gdiplus::Rect(
-            p.x, p.y, sideLen, sideLen));
+        graphics.FillRectangle(&cellBrush, p.x, p.y, (INT)sideLen, (INT)sideLen);
     }
 }

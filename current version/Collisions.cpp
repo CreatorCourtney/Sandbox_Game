@@ -14,6 +14,9 @@ namespace Object {
         // walls        
         HandleSideCollisionsWithWalls();
         HandleCornerCollisionsWithWalls();
+
+        // other entities
+        handleCollisionsWithGameObjects();
     }
 
     void GameObject::HandleSideCollisionsWithWalls() {
@@ -80,9 +83,10 @@ namespace Object {
         int d = dotSize/2;
         Math::Point2 centreScreenPos = Math::Point2(screenPos.x+size.x/2, screenPos.y+size.y/2);
         Gdiplus::SolidBrush redBrush(red), blueBrush(blue);
-        Gdiplus::Pen pen(blue), pen2(green);
+        Gdiplus::Pen pen(blue), pen2(green), pen3(red);
 
         graphics.DrawRectangle(&pen, screenPos.x, screenPos.y, size.x, size.y);
+        graphics.DrawEllipse(&pen2, centreScreenPos.x-radius, centreScreenPos.y-radius, 2*radius, 2*radius);
 
         // top side
         for (int i = 0; i <= cellularDimensions.X; i++) {
@@ -116,5 +120,25 @@ namespace Object {
 
         graphics.DrawLine(&pen2, Gdiplus::Point(centreScreenPos.x, centreScreenPos.y), 
         Gdiplus::Point(p.x, p.y));
+    }
+
+    void GameObject::handleCollisionsWithGameObjects() {
+        // iterate through all the other game objects
+        for (int i = 0; i < gameObjects.size(); i++) {
+            // doesn't collide with itself or objects that have no collision
+            if (gameObjects[i]==this || !gameObjects[i]->hasCollision) continue;
+            Math::Vector2 disp = gameObjects[i]->centrePos - centrePos;
+            // break up objects directly on each other
+            if (disp == Math::Zero2) disp = Math::One2;
+            float d = Math::absf(disp.length()), r = radius+gameObjects[i]->radius;
+            if (d < r) {
+                // d is the total distance it needs to move
+                disp.normalise(); disp = disp * (r-d)/2;
+                pos = pos - disp;
+                centrePos = centrePos - disp;
+                gameObjects[i]->pos = gameObjects[i]->pos + disp;
+                gameObjects[i]->centrePos = gameObjects[i]->centrePos + disp;
+            } 
+        }
     }
 }

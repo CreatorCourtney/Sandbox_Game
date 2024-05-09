@@ -77,6 +77,7 @@ namespace Object
         int hp;
         float speed;
         Math::Point2 size;
+        float radius = 0.0f; 
         bool hasCollision;
         GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
             EntityType Type, Math::Point2 Size, float Speed, int Hp);
@@ -91,6 +92,7 @@ namespace Object
         void handleCollisions();
         void HandleSideCollisionsWithWalls();
         void HandleCornerCollisionsWithWalls();
+        void handleCollisionsWithGameObjects();
         void DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Math::Point2 screenPos);
 
         void updateBkg();

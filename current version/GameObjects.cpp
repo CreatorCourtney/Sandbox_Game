@@ -30,7 +30,6 @@ namespace Object
                 hasCollision = true;
                 srcDimensions = {25, 25};
                 cellularDimensions = {1, 1, size.x, size.y};
-                // velocityFunc = Func::playerVelocity;
                 break;
 
             case Wolf:
@@ -40,16 +39,20 @@ namespace Object
                 srcDimensions = {50, 50};
                 break;
         }
+        // brush mult, for drawing the entity's texture to scale
         float   scaleX = (float)size.x/(float)srcDimensions.x, 
                 scaleY = (float)size.y/(float)srcDimensions.y;
         brushMultMatrix = new Gdiplus::Matrix(scaleX, 0.0f, 0.0f, scaleY, 0.0f, 0.0f);
 
+        // assigning the number of cells, and space between collision points
         if (Type != Player) {
             int numX = size.x/sideLen+1, numY = size.y/sideLen+1,
                 stepX = (float)size.x/(float)numX, stepY = (float)size.y/(float)numY;
-
             cellularDimensions = {numX, numY, stepX, stepY};
         }
+
+        // set radius, the distance from the centre for entity collisions
+        radius = Math::Max(size.x/2, size.y/2);
 
         // preemptively set the brushes so that they don't wrap, thus drawing the image only once
         if (hasAnimation) {
@@ -89,15 +92,15 @@ namespace Object
 
     void GameObject::update() {
         if (gameIsPaused) return;
+        handleCollisions();
         updateVelocity();
         updatePosition();
-        handleCollisions();
         if (this == player) updateBkg();
     }
 
     void GameObject::updateVelocity() {
         // for some reason intellisense thinks there are errors with these function calls. 
-        // do not listen to it, it is lying they compile just fine okay
+        // do not listen to it, it is lying, they compile just fine okay
         switch (type)
         {
             case Player:
@@ -169,6 +172,7 @@ namespace Object
         return Math::Point2(x, y);
     }
 
+    // improve the switch statement here when you get the chance :3
     Math::Vector2 getWorldPosition(Math::Point2 wndPos)
     {
         float x = wndPos.x, y = wndPos.y;

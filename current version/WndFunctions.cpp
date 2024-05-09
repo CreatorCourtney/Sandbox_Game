@@ -22,11 +22,26 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
         Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
         80.0f*Globals::g_scale, 5
     ));
-    // Globals::gameObjects.push_back(new Object::GameObject(
-    //     Math::Vector2(500.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
-    //     Object::Wolf, Math::Point2(75*Globals::g_scale, 75*Globals::g_scale),
-    //     80.0f*Globals::g_scale, 5
-    // ));
+    Globals::gameObjects.push_back(new Object::GameObject(
+        Math::Vector2(500.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
+        Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
+        80.0f*Globals::g_scale, 5
+    ));
+    Globals::gameObjects.push_back(new Object::GameObject(
+        Math::Vector2(600.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
+        Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
+        80.0f*Globals::g_scale, 5
+    ));
+    Globals::gameObjects.push_back(new Object::GameObject(
+        Math::Vector2(700.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
+        Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
+        80.0f*Globals::g_scale, 5
+    ));
+    Globals::gameObjects.push_back(new Object::GameObject(
+        Math::Vector2(800.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
+        Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
+        80.0f*Globals::g_scale, 5
+    ));
 
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
 

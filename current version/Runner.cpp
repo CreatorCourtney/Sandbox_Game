@@ -4,6 +4,8 @@
 #include "GameObjects.cpp"
 #include "GameMath.cpp"
 #include "Inventory.cpp"
+#include "Collisions.cpp"
+#include "EntityFunctions.cpp"
 
 int main() {
     int ext = WndMain(

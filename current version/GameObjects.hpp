@@ -5,6 +5,7 @@
 #include <gdiplus.h>
 #include <iostream>
 #include <vector>
+#include <functional>
 
 #include "GameMath.hpp"
 #include "Globals.hpp"
@@ -81,16 +82,21 @@ namespace Object
             EntityType Type, Math::Point2 Size, float Speed, int Hp);
         void draw(Gdiplus::Graphics& graphics);
         void update();
+        Animations animations;
 
     private:
         void updateVelocity();
         void updatePosition();
+        // collision detection
         void handleCollisions();
+        void HandleSideCollisionsWithWalls();
+        void HandleCornerCollisionsWithWalls();
+        void DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Math::Point2 screenPos);
+
         void updateBkg();
         Gdiplus::TextureBrush * chooseAnimationStage();
         bool hasAnimation = true;
         Gdiplus::TextureBrush* brush;
-        Animations animations;
         Gdiplus::Matrix * brushMultMatrix;
         Math::Point2 srcDimensions;
         // X,Y = number of cells, Width/Height = step for collision detection

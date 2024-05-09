@@ -41,41 +41,72 @@ namespace Frame
         }
 
         // developer debug tools
-        if (showDebugInfo) ShowDebugInfo(graphics);
+        int fps = 1.0f/deltaTime;
+        if (fps<0) fps = prevFPS; // dTime = 0
+        else prevFPS = fps;
+        std::wstring fpsText = std::to_wstring(fps)+L" FPS";
+        placeText(10, 10, fpsText, white, 10, graphics);
+        placeText(10, 25, L"press F9 to toggle debug menu", white, 10, graphics);
+        if (debuggingTools&1) ShowDebugInfo(graphics);
     }
 
     void DrawBackgroundSection(Gdiplus::Graphics& graphics)
     {
         Gdiplus::SolidBrush blackBrush(Gdiplus::Color(0,0,0));
         int x = 0, y = 0;
-        int srcx = 0, srcy = 0, bkgx = 0, bkgy = 0;
         
-        switch (bkgState&3) { // first two bits
-            case 0: // centre
+        switch (bkgState) {
+            case 0: // full centre
                 x = wndWidth/2-player->pos.x;
+                y = wndHeight/2-player->pos.y;
                 break;
-            case 1: // left
+            case 1: // centre y, left x
                 if (bkgWidth<wndWidth) {
                     graphics.FillRectangle(&blackBrush, 0, 0, 500, 500);
                     x = (wndWidth-bkgWidth)/2;
                 }
-                break;
-            case 2: // right
-                x = wndWidth-bkgWidth;
-                break;
-        }
-
-        switch (bkgState&12) { // bits 3 and 4
-            case 0: // centre
                 y = wndHeight/2-player->pos.y;
                 break;
-            case 4: // top
+            case 2: // centre y, right x
+                x = wndWidth-bkgWidth;
+                y = wndHeight/2-player->pos.y;
+                break;
+            case 4: // top y, centre x
+                x = wndWidth/2-player->pos.x;
                 if (bkgHeight<wndHeight) {
                     graphics.FillRectangle(&blackBrush, 0, 0, 500, 500);
                     y = (wndHeight-bkgHeight)/2;
                 }
                 break;
-            case 8: // bottom
+            case 5: // top y, left x
+                if (bkgWidth<wndWidth) {
+                    graphics.FillRectangle(&blackBrush, 0, 0, 500, 500);
+                    x = (wndWidth-bkgWidth)/2;
+                } if (bkgHeight<wndHeight) {
+                    graphics.FillRectangle(&blackBrush, 0, 0, 500, 500);
+                    y = (wndHeight-bkgHeight)/2;
+                }
+                break;
+            case 6: // top y, right x
+                x = wndWidth-bkgWidth;
+                if (bkgHeight<wndHeight) {
+                    graphics.FillRectangle(&blackBrush, 0, 0, 500, 500);
+                    y = (wndHeight-bkgHeight)/2;
+                }
+                break;
+            case 8: // bottom y, centre x
+                x = wndWidth/2-player->pos.x;
+                y = wndHeight-bkgHeight;
+                break;
+            case 9: // bottom y, left x
+                if (bkgWidth<wndWidth) {
+                    graphics.FillRectangle(&blackBrush, 0, 0, 500, 500);
+                    x = (wndWidth-bkgWidth)/2;
+                }
+                y = wndHeight-bkgHeight;
+                break;
+            case 10: // bottom y, right x
+                x = wndWidth-bkgWidth;
                 y = wndHeight-bkgHeight;
                 break;
         }
@@ -278,23 +309,16 @@ namespace Frame
     }
 
     void ShowDebugInfo(Gdiplus::Graphics& graphics) {
-        int yPos = 10;
-        // frame rate
-        int fps = 1.0f/deltaTime;
-        if (fps<0) fps = prevFPS; // dTime = 0
-        else prevFPS = fps;
-        std::wstring fpsText = std::to_wstring(fps)+L" FPS";
-        placeText(10, yPos, fpsText, white, 10, graphics); yPos += 15;
-
+        int yPos = 40;
         // player position
         std::wstring posTxt = L"position: ("+
-            std::to_wstring(player->pos.x)+L", "+
-            std::to_wstring(player->pos.y)+L')';
+            std::to_wstring(player->centrePos.x)+L", "+
+            std::to_wstring(player->centrePos.y)+L')';
         placeText(10, yPos, posTxt, white, 10, graphics); yPos += 15;
         // player cell
         posTxt = L"cell: ("+
-            std::to_wstring(int(player->pos.x/sideLen))+L", "+
-            std::to_wstring(int(player->pos.y/sideLen))+L')';
+            std::to_wstring(int(player->centrePos.x/sideLen))+L", "+
+            std::to_wstring(int(player->centrePos.y/sideLen))+L')';
         placeText(10, yPos, posTxt, white, 10, graphics); yPos += 15;
 
         // entity count
@@ -305,12 +329,21 @@ namespace Frame
         placeText(10, yPos, entityTxt, white, 10, graphics); yPos += 15;
 
         // debug tools
-        placeText(10, yPos, L"press F9 to toggle debug menu", white, 10, graphics); yPos += 15;
         placeText(10, yPos, L"press F8 to toggle speed boost", 
-        (debugMoveSpeedBoost)? red : white, 10, graphics); yPos += 15;
+        (debuggingTools&2)? red : white, 10, graphics); yPos += 15;
         placeText(10, yPos, L"press F7 to toggle noclip", 
         (player->hasCollision)? white : red, 10, graphics); yPos += 15;
         placeText(10, yPos, L"press F6 to toggle hitboxes",
-        (showHitboxes)? red : white, 10, graphics); yPos += 15;
+        (debuggingTools&4)? red : white, 10, graphics); yPos += 15;
+
+    }
+
+    void shadeCell(Gdiplus::Graphics& graphics, Math::Point2 cell) {
+        Gdiplus::SolidBrush cellBrush(Gdiplus::Color(100, 0, 0, 255));
+        Math::Vector2 o(cell.x*sideLen, cell.y*sideLen);
+        Math::Point2 p = Object::getScreenPosition(o);
+        if (p.x<-sideLen||p.x>wndWidth||p.y<-sideLen||p.y>wndHeight) return;
+        graphics.FillRectangle(&cellBrush, Gdiplus::Rect(
+            p.x, p.y, sideLen, sideLen));
     }
 }

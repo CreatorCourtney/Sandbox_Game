@@ -29,8 +29,8 @@ namespace Object
                 animations = playerAnimations;
                 hasCollision = true;
                 srcDimensions = {25, 25};
-
                 cellularDimensions = {1, 1, size.x, size.y};
+                // velocityFunc = Func::playerVelocity;
                 break;
 
             case Wolf:
@@ -84,45 +84,7 @@ namespace Object
         graphics.FillRectangle(imgBrush, screenPos.x, screenPos.y, size.x, size.y);
 
         // debugging tools
-        if (showDebugInfo && showHitboxes) {
-            int dotSize = 6;
-            Math::Point2 centreScreenPos = Math::Point2(screenPos.x+size.x/2, screenPos.y+size.y/2);
-            Gdiplus::SolidBrush redBrush(red), blueBrush(blue);
-
-            graphics.DrawRectangle(new Gdiplus::Pen(blue), screenPos.x, screenPos.y, size.x, size.y);
-
-            // top side
-            for (int i = 1; i < cellularDimensions.X; i++) {
-                int x = screenPos.x+cellularDimensions.Width*i-dotSize/2,
-                    y = screenPos.y-dotSize/2;
-                graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
-            }
-            // bottom side
-            for (int i = 0; i <= cellularDimensions.X; i++) {
-                int x = screenPos.x+cellularDimensions.Width*i-dotSize/2,
-                    y = screenPos.y+size.y-dotSize/2;
-                graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
-            }
-            // left side
-            for (int i = 0; i < cellularDimensions.Y; i++) {
-                int y = screenPos.y+cellularDimensions.Height*i-dotSize/2,
-                    x = screenPos.x-dotSize/2;
-                graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
-            }
-            // right side
-            for (int i = 0; i < cellularDimensions.Y; i++) {
-                int y = screenPos.y+cellularDimensions.Height*i-dotSize/2,
-                    x = screenPos.x+size.x-dotSize/2;
-                graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
-            }
-            graphics.FillEllipse(&blueBrush, centreScreenPos.x-dotSize/2, centreScreenPos.y-dotSize/2, dotSize, dotSize);
-            
-            // std::wstring txt = L"cells: "+std::to_wstring(cellularDimensions.X)+
-            // L", "+std::to_wstring(cellularDimensions.Y);
-            // Frame::placeText(screenPos.x, screenPos.y, txt, white, 9, graphics);
-            // txt = std::to_wstring(cellularDimensions.Width)+L", "+std::to_wstring(cellularDimensions.Height);
-            // Frame::placeText(screenPos.x, screenPos.y+10, txt, white, 9, graphics);
-        }
+        if ((debuggingTools&5) == 5) DrawHitbox(graphics, 6, screenPos);
     }
 
     void GameObject::update() {
@@ -134,29 +96,15 @@ namespace Object
     }
 
     void GameObject::updateVelocity() {
+        // for some reason intellisense thinks there are errors with these function calls. 
+        // do not listen to it, it is lying they compile just fine okay
         switch (type)
         {
-            case Player: {
-                float s = speed + speed*bool(inputKeys&16);
-                if (debugMoveSpeedBoost) s *= 2.0f;
-                velocity = Math::Vector2(
-                    s*(bool(inputKeys&1)-bool(inputKeys&4)),
-                    s*(bool(inputKeys&2)-bool(inputKeys&8))
-                ); 
-                // update the direction you're facing based on velocity
-                if (velocity.y > 0.0f) animations.facing = 0;
-                else if (velocity.y < 0.0f) animations.facing = 1;
-                else if (velocity.x > 0.0f) animations.facing = 3;
-                else if (velocity.x < 0.0f) animations.facing = 2;
-                else animations.stage = 0.0f;
-                break;
-            }
+            case Player:
+                Func::playerVelocityFunc(this); break;
 
-            case Wolf: { // walk directly towards player
-                Math::Vector2 dir = Math::getUnitVector(centrePos, player->centrePos);
-                velocity = dir * speed;
-                break;
-            }
+            case Wolf: // walk directly towards player
+                Func::wolfVelocityFunc(this); break;
 
             default: std::cout << "unknown entity\n"; break;
         }
@@ -165,73 +113,6 @@ namespace Object
     void GameObject::updatePosition() {
         pos = pos + (velocity * deltaTime);
         centrePos = pos + Math::Vector2(size.x/2, size.y/2);
-    }
-
-    void GameObject::handleCollisions() {
-        if (!hasCollision) return;
-        // world borders
-        if (pos.x<0.0f) pos.x = 0.0f;
-        else if (pos.x>bkgWidth-size.x) pos.x = bkgWidth-size.x-1.0f;
-        if (pos.y<0.0f) pos.y = 0.0f;
-        else if (pos.y>bkgHeight-size.y) pos.y = bkgHeight-size.y-1.0f;
-
-        // walls        
-        // top side, move down
-        for (int i = 1; i < cellularDimensions.X; i++) {
-            Math::Vector2 node(pos.x+cellularDimensions.Width*i, pos.y);
-            Math::Point2 p = findCell(node);
-            if (grid[p.x][p.y]&BARRIER) pos.y = (p.y+1)*sideLen;
-        }
-        // bottom side, move up
-        for (int i = 1; i < cellularDimensions.X; i++) {
-            Math::Vector2 node(pos.x+cellularDimensions.Width*i, pos.y+size.y);
-            Math::Point2 p = findCell(node);
-            if (grid[p.x][p.y]&BARRIER) pos.y = p.y*sideLen - size.y;
-        }
-        // left side, move right
-        for (int i = 1; i < cellularDimensions.X; i++) {
-            Math::Vector2 node(pos.x, pos.y+cellularDimensions.Height*i);
-            Math::Point2 p = findCell(node);
-            if (grid[p.x][p.y]&BARRIER) pos.x = (p.x+1)*sideLen;
-        }
-        // right side, move left
-        for (int i = 1; i < cellularDimensions.X; i++) {
-            Math::Vector2 node(pos.x+size.y, pos.y+cellularDimensions.Height*i);
-            Math::Point2 p = findCell(node);
-            if (grid[p.x][p.y]&BARRIER) pos.x = p.x*sideLen - size.x;
-        }
-
-        // corners
-        Math::Vector2 disp = Math::Zero2;
-        Math::Point2 p = findCell(pos); // top left
-        if (grid[p.x][p.y]&BARRIER) 
-            disp = ((Math::Vector2(p.x,p.y)+Math::One2)*sideLen)-pos;
-        if (Math::absf(disp.x)<Math::absf(disp.y)) pos.x += disp.x;
-        else pos.y += disp.y;
-  
-        p = findCell(pos+Math::Vector2(size.x,0.0f)); // top right
-        disp = Math::Zero2;
-        if (grid[p.x][p.y]&BARRIER)
-            disp =  (Math::Vector2(p.x,p.y+1.0f)*sideLen)-
-                    (pos+Math::Vector2(size.x,0.0f));
-        if (Math::absf(disp.x)<Math::absf(disp.y)) pos.x += disp.x;
-        else pos.y += disp.y;
- 
-        p = findCell(pos+Math::Vector2(0.0f,size.y)); // bottom left
-        disp = Math::Zero2;
-        if (grid[p.x][p.y]&BARRIER)
-            disp =  (Math::Vector2(p.x+1.0f,p.y)*sideLen)-
-                    (pos+Math::Vector2(0.0f,size.y));
-        if (Math::absf(disp.x)<Math::absf(disp.y)) pos.x += disp.x;
-        else pos.y += disp.y;
-        
-        p = findCell(pos+Math::Vector2(size.x, size.y)); // bottom right
-        disp = Math::Zero2;
-        if (grid[p.x][p.y]&BARRIER)
-            disp =  (Math::Vector2(p.x,p.y)*sideLen)-
-                    (pos+Math::Vector2(size.x,size.y));
-        if (Math::absf(disp.x)<Math::absf(disp.y)) pos.x += disp.x;
-        else pos.y += disp.y;
     }
 
     void GameObject::updateBkg() {
@@ -321,30 +202,45 @@ namespace Object
     Math::Point2 getScreenPosition(Math::Vector2 worldPos)
     {
         int x = worldPos.x, y = worldPos.y;
-
-        switch (bkgState&3) { // first two bits
-            case 0: // centre
+        switch (bkgState) {
+            case 0: // full centre
                 x += (wndWidth/2)-player->pos.x;
-                break;
-            case 1: // left
-                if (bkgWidth<wndWidth) x += (wndWidth-bkgWidth)/2;
-                break;
-            case 2: // right
-                x += wndWidth-bkgWidth;
-                break;
-        }
-
-        switch (bkgState&12) { // bits 3 and 4
-            case 0: // centre
                 y += (wndHeight/2)-player->pos.y;
                 break;
-            case 4: // top
+            case 1: // centre y, left x
+                if (bkgWidth<wndWidth) x += (wndWidth-bkgWidth)/2;
+                y += (wndHeight/2)-player->pos.y;
+                break;
+            case 2: // centre y, right x
+                x += wndWidth-bkgWidth;
+                y += (wndHeight/2)-player->pos.y;
+                break;
+            case 4: // top y, centre x
+                if (bkgHeight<wndHeight) y += (wndHeight-bkgHeight)/2;
+                x += (wndWidth/2)-player->pos.x;
+                break;
+            case 5: // top y, left x
+                if (bkgWidth<wndWidth) x += (wndWidth-bkgWidth)/2;
                 if (bkgHeight<wndHeight) y += (wndHeight-bkgHeight)/2;
                 break;
-            case 8: // bottom
+            case 6: // top y, right x
+                x += wndWidth-bkgWidth;
+                if (bkgHeight<wndHeight) y += (wndHeight-bkgHeight)/2;
+                break;
+            case 8: // bottom y, centre x
+                x += (wndWidth/2)-player->pos.x;
+                y += wndHeight-bkgHeight;
+                break;
+            case 9: // bottom y, left x
+                if (bkgWidth<wndWidth) x += (wndWidth-bkgWidth)/2;
+                y += wndHeight-bkgHeight;
+                break;
+            case 10: // bottom y, right x
+                x += wndWidth-bkgWidth;
                 y += wndHeight-bkgHeight;
                 break;
         }
         return Math::Point2(x, y);
     }
+
 }

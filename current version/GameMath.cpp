@@ -13,11 +13,14 @@ namespace Math
     // makes itself a unit vector
     void Vector2::normalise() {
         float len = length();
-        x /= len; y /= len;
+        if (len == 0.0f) *this = Zero2;
+        else {x /= len; y /= len;}
     }
     // returns itself as a unit vector
-    Vector2 Vector2::normalised() { 
-        return *this / length();
+    Vector2 Vector2::normalised() {
+        float len = length();
+        if (len == 0.0f) return Zero2; 
+        return *this / len;
     }
 
     Vector2 Vector2::operator+(Vector2 const& other) {

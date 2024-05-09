@@ -16,12 +16,17 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
 
     Globals::SetGrid();
 
-    // spawn a wolf for testing
+    // spawn wolves for testing
     Globals::gameObjects.push_back(new Object::GameObject(
         Math::Vector2(200.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
-        Object::Wolf, Math::Point2(150*Globals::g_scale, 150*Globals::g_scale),
-        100.0f*Globals::g_scale, 5
+        Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
+        80.0f*Globals::g_scale, 5
     ));
+    // Globals::gameObjects.push_back(new Object::GameObject(
+    //     Math::Vector2(500.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
+    //     Object::Wolf, Math::Point2(75*Globals::g_scale, 75*Globals::g_scale),
+    //     80.0f*Globals::g_scale, 5
+    // ));
 
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
 
@@ -138,17 +143,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     ToggleFullscreen(hwnd, Globals::viewRect.Width, Globals::viewRect.Height); 
                     break;
                 case VK_F9:
-                    Globals::showDebugInfo = !Globals::showDebugInfo;
-                    break;
+                    Globals::debuggingTools ^= 1; break;
                 case VK_F8:
-                    Globals::debugMoveSpeedBoost = !Globals::debugMoveSpeedBoost;
-                    break;
+                    Globals::debuggingTools ^= 2; break;
                 case VK_F7:
                     Globals::player->hasCollision = !Globals::player->hasCollision;
                     break;
                 case VK_F6:
-                    Globals::showHitboxes = !Globals::showHitboxes;
-                    break;
+                    Globals::debuggingTools ^= 4; break;
             } break;
 
         case WM_KEYUP:

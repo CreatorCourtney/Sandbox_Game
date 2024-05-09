@@ -11,6 +11,8 @@
 #include "GameMath.hpp"
 #include "GameObjects.hpp"
 #include "Inventory.hpp"
+// had to include here to avoid compiler issues, NOT included in GameObjects.hpp
+#include "EntityFunctions.hpp"
 
 namespace Globals {
     float g_scale = 1.0f;
@@ -23,9 +25,8 @@ namespace Globals {
     float deltaTime = 0.0f;
     int prevFPS = 0;
     bool gameIsPaused = 0;
-    bool showDebugInfo = true, showHitboxes = true;
-    bool debugMoveSpeedBoost = false;
 
+    unsigned char debuggingTools = 5; // . . . . . hitboxes, speed, showInfo
     unsigned char inputKeys = 0; // 000Swasd
     unsigned char bkgState = 0b00000000;
     /* bit decomposition:

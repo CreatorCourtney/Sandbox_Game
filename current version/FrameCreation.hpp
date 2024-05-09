@@ -21,6 +21,7 @@ namespace Frame
     void PlaceObjectInCell(Math::Point2 cell, int objType);
     void PlaceObjectInCell(Math::Point2 cell, int objType, bool updateBkgBrush);
     void DrawCell(Math::Point2 cell, Gdiplus::Graphics& graphics);
+    void shadeCell(Gdiplus::Graphics& graphics, Math::Point2 cell);
 
     void DrawImageToBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Image* img, int x, int y);
     void DrawImageToBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Image* img, int x, int y, int srcX, int srcY, int srcWidth, int srcHeight);

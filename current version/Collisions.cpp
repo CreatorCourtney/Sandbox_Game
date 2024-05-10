@@ -5,6 +5,10 @@ using namespace Globals;
 namespace Object {
     void GameObject::handleCollisions() {
         if (!hasCollision) return;
+        // entities
+        handleCollisionsWithGameObjects();
+        // handle everything else AFTER other entities, to avoid being pushed into walls/oob
+
         // world borders
         if (pos.x<0.0f) pos.x = 0.0f;
         else if (pos.x>bkgWidth-size.x) pos.x = bkgWidth-size.x-1.0f;
@@ -14,9 +18,6 @@ namespace Object {
         // walls        
         HandleSideCollisionsWithWalls();
         HandleCornerCollisionsWithWalls();
-
-        // other entities
-        handleCollisionsWithGameObjects();
     }
 
     void GameObject::HandleSideCollisionsWithWalls() {
@@ -135,9 +136,7 @@ namespace Object {
                 // d is the total distance it needs to move
                 disp.normalise(); disp = disp * (r-d)/2;
                 pos = pos - disp;
-                centrePos = centrePos - disp;
                 gameObjects[i]->pos = gameObjects[i]->pos + disp;
-                gameObjects[i]->centrePos = gameObjects[i]->centrePos + disp;
             } 
         }
     }

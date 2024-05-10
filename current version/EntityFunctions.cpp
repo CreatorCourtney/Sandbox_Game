@@ -4,7 +4,8 @@ using namespace Globals;
 
 namespace Func {
     void playerVelocityFunc(Object::GameObject *p) {
-        float s = p->speed; if (inputKeys&16) s *= 2;
+        float s = p->speed; 
+        if (inputKeys&16) s *= 2.0f;
         if (debuggingTools&2) s *= 2.0f;
         p->velocity = Math::Vector2(
             (bool(inputKeys&1)-bool(inputKeys&4)),

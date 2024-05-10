@@ -78,7 +78,7 @@ namespace Math
 
     float clampf(float min, float max, float x) {
         if (x<min) return min;
-        else return (max<x)? max : x;
+        return (max<x)? max : x;
     }
 }
 

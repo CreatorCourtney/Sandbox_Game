@@ -92,9 +92,9 @@ namespace Object
 
     void GameObject::update() {
         if (gameIsPaused) return;
-        handleCollisions();
         updateVelocity();
         updatePosition();
+        handleCollisions();
         if (this == player) updateBkg();
     }
 

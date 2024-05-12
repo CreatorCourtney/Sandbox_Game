@@ -13,6 +13,7 @@
 #include "Inventory.hpp"
 // had to include here to avoid compiler issues, NOT included in GameObjects.hpp
 #include "EntityFunctions.hpp"
+#include "Collisions.hpp"
 
 namespace Globals {
     float g_scale = 1.0f;
@@ -26,7 +27,7 @@ namespace Globals {
     int prevFPS = 0;
     bool gameIsPaused = 0;
 
-    unsigned char debuggingTools = 5; // . . . . . hitboxes, speed, showInfo
+    unsigned char debuggingTools = 4; // . . . . . hitboxes, speed, showInfo
     unsigned char inputKeys = 0; // 000Swasd
     unsigned char bkgState = 0b00000000;
     /* bit decomposition:

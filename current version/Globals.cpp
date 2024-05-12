@@ -73,8 +73,8 @@ namespace Globals {
 
         // hotbar images
         {
-            hotbarButtons[0] = new Inventory::HotbarSlot(Gdiplus::Rect(10, 25,100,100), LOG, 100);
-            hotbarButtons[1] = new Inventory::HotbarSlot(Gdiplus::Rect(120,25,100,100), BRIDGE, 100);
+            hotbarButtons[0] = new Inventory::HotbarSlot(Gdiplus::Rect(10, 25,100,100), LOG, 20);
+            hotbarButtons[1] = new Inventory::HotbarSlot(Gdiplus::Rect(120,25,100,100), BRIDGE, 20);
             hotbarButtons[2] = new Inventory::HotbarSlot(Gdiplus::Rect(230,25,100,100), 0, 20);
             hotbarButtons[3] = new Inventory::HotbarSlot(Gdiplus::Rect(340,25,100,100), 0, 20);
             hotbarButtons[4] = new Inventory::HotbarSlot(Gdiplus::Rect(450,25,100,100), 0, 20);

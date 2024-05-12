@@ -26,17 +26,29 @@ namespace Object
         switch (type)
         {
             case Player:
+                // assign texture variables
                 animations = playerAnimations;
-                hasCollision = true;
                 srcDimensions = {25, 25};
+                // attributes
                 cellularDimensions = {1, 1, size.x, size.y};
+                hasCollision = true;
+                // behaviour functions
+                velocityFunc = Func::playerVelocityFunc;
+                positionFunc = Func::defaultPositionFunc;
+                collisionFunc = Collisions::defaultCollisionFunction;
                 break;
 
             case Wolf:
-                hasAnimation = false;
-                hasCollision = true;
+                // assign texture variables
                 brush = wolfBrush;
                 srcDimensions = {50, 50};
+                // attributes
+                hasAnimation = false;
+                hasCollision = true;
+                // behaviour functions
+                velocityFunc = Func::wolfVelocityFunc;
+                positionFunc = Func::defaultPositionFunc;
+                collisionFunc = Collisions::defaultCollisionFunction;
                 break;
         }
         // brush mult, for drawing the entity's texture to scale
@@ -92,30 +104,10 @@ namespace Object
 
     void GameObject::update() {
         if (gameIsPaused) return;
-        updateVelocity();
-        updatePosition();
-        handleCollisions();
+        velocityFunc(this);
+        positionFunc(this);
+        collisionFunc(this);
         if (this == player) updateBkg();
-    }
-
-    void GameObject::updateVelocity() {
-        // for some reason intellisense thinks there are errors with these function calls. 
-        // do not listen to it, it is lying, they compile just fine okay
-        switch (type)
-        {
-            case Player:
-                Func::playerVelocityFunc(this); break;
-
-            case Wolf: // walk directly towards player
-                Func::wolfVelocityFunc(this); break;
-
-            default: std::cout << "unknown entity\n"; break;
-        }
-    }
-
-    void GameObject::updatePosition() {
-        pos = pos + (velocity * deltaTime);
-        centrePos = pos + Math::Vector2(size.x/2, size.y/2);
     }
 
     void GameObject::updateBkg() {

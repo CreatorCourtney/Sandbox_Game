@@ -84,29 +84,31 @@ namespace Object
         void draw(Gdiplus::Graphics& graphics);
         void update();
         Animations animations;
+        // X,Y = number of cells, Width/Height = step for collision detection
+        Gdiplus::Rect cellularDimensions;
 
     private:
-        void updateVelocity();
-        void updatePosition();
-        // collision detection
-        void handleCollisions();
-        void HandleSideCollisionsWithWalls();
-        void HandleCornerCollisionsWithWalls();
-        void handleCollisionsWithGameObjects();
+        // what should happen when updating the entity's velocity
+        void (*velocityFunc)(GameObject*);
+        // what should happen when updating the entity's position
+        void (*positionFunc)(GameObject*);
+        // collision behaviour
+        void (*collisionFunc)(GameObject*);
         void DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Math::Point2 screenPos);
 
         void updateBkg();
         Gdiplus::TextureBrush * chooseAnimationStage();
-        bool hasAnimation = true;
-        Gdiplus::TextureBrush* brush;
-        Gdiplus::Matrix * brushMultMatrix;
-        Math::Point2 srcDimensions;
-        // X,Y = number of cells, Width/Height = step for collision detection
-        Gdiplus::Rect cellularDimensions;
+        bool hasAnimation = true; 
+        Gdiplus::TextureBrush* brush; //. if the entity has no animations, this constant brush is used for drawing
+        Gdiplus::Matrix * brushMultMatrix; // scale for image drawing purposes
+        Math::Point2 srcDimensions; // dimensions (in pixels) of the image file
     };
 
+    // finds the cell coordinates of a position in world space
     Math::Point2 findCell(Math::Vector2 pos);
+    // finds the position on the map associated with (x,y) coordinates on the screen
     Math::Vector2 getWorldPosition(Math::Point2 wndPos);
+    // translates a position on the map to its relative plaement on the screen
     Math::Point2 getScreenPosition(Math::Vector2 worldPos);
 }
 

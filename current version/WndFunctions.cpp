@@ -7,22 +7,16 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
     Frame::InitialiseFrameCreation();
 
     // instantiate the player
-    Globals::gameObjects.push_back(new Object::GameObject(
-        Math::Vector2(400.0f, 200.0f), Math::Vector2(0.0f, 0.0f),
-        Object::Player, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale), 
-        100.0f*Globals::g_scale, 5
-    ));
+    Object::Instantiate(Object::Player, Math::Vector2(400.0f, 200.0f),
+        Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
+        100.0f*Globals::g_scale, 5.0f);
     Globals::player = Globals::gameObjects[0];
 
-    Globals::SetGrid();
-
     // spawn wolves for testing
-    for (int i = 0; i < 1; i++) {
-        Globals::gameObjects.push_back(new Object::GameObject(
-            Math::Vector2(500.0f, 300.0f), Math::Vector2(0.0f, 0.0f),
-            Object::Wolf, Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
-            80.0f*Globals::g_scale, 5
-        ));
+    for (int i = 0; i < 2; i++) {
+        Object::Instantiate(Object::Wolf, Math::Vector2(500.0f, 300.0f), 
+            Math::Point2(50*Globals::g_scale, 50*Globals::g_scale), 
+            80.0f*Globals::g_scale, 5.0f);
     }
 
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));

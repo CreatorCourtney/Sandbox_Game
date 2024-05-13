@@ -71,6 +71,19 @@ namespace Globals {
             playerAnimations = Object::Animations(front, back, left, right, Ft, Bt, Lt, Rt);
         }
 
+        // falling tree animations
+        {
+            std::vector<Gdiplus::TextureBrush*> anim;
+            for (int i = 0; i < 7; i++) {
+                std::wstring txt = L"images/Falling_Tree/"+std::to_wstring(i)+L".png";
+                Gdiplus::Image *img = Gdiplus::Image::FromFile(txt.c_str());
+                Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
+                anim.push_back(brush);
+            }
+            falling_treeAnimations.front = anim;
+            falling_treeAnimations.frontInter = float(anim.size()) / 1.0f;
+        }
+
         // hotbar images
         {
             hotbarButtons[0] = new Inventory::HotbarSlot(Gdiplus::Rect(10, 25,100,100), LOG, 20);
@@ -80,15 +93,15 @@ namespace Globals {
             hotbarButtons[4] = new Inventory::HotbarSlot(Gdiplus::Rect(450,25,100,100), 0, 20);
             hotbarButtons[5] = new Inventory::HotbarSlot(Gdiplus::Rect(560,58, 30, 67), 0, 20);
         }
+        
+
+        
+        
         return 0;
     }
 
     void SetGrid()
     {
-        // cell size is relative to the size of the player's hitbox
-        // but add 2 so they can more easily walk through 1 wide gaps
-        sideLen = Math::maxf(player->size.x, player->size.y)+2.0f;
-
         grid = {
             {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
             {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},

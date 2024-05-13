@@ -43,20 +43,31 @@ namespace Object
     enum EntityType
     {
         Player, // 0
-        Wolf    // 1
+        Wolf,    // 1
+        Falling_Tree // 2
     };
 
+    // object to store images for game object animation
     class Animations {
     public:
+        // sets of images, all of the images in one vector 
+        // will be shows sequentially to play an animation
         std::vector<Gdiplus::TextureBrush*> front;
         std::vector<Gdiplus::TextureBrush*> back;
         std::vector<Gdiplus::TextureBrush*> left;
         std::vector<Gdiplus::TextureBrush*> right;
+
         // which set should be used,
         // front, back, left, right = 0, 1, 2, 3
         int facing = 0;
+        // float used for vector index; it increases by a subinteger value
+        // according to deltaTime, and when typecasted to int, will be
+        // truncated to serve as a vector index
         float stage = 0;
+
+        // the amount of time needed to pass between each image in each vector
         float frontInter, backInter, leftInter, rightInter;
+
         // constructors
         Animations(std::vector<Gdiplus::TextureBrush*> Front,
             std::vector<Gdiplus::TextureBrush*> Back,
@@ -66,26 +77,47 @@ namespace Object
         Animations();
     };
 
+
+    // a class used to represent a dynamic entity in the game
     class GameObject {
     public:
+        // position of the top left corner of the hitbox
         Math::Vector2 pos;
-        Math::Vector2 centrePos;
-        Math::Vector2 velocity;
-        EntityType type;
-        // object's health
-        // currently, trees use HP to represent their index in trees
-        int hp;
-        float speed;
+        // size of the hitbox
         Math::Point2 size;
-        float radius = 0.0f; 
+        // position of the centre of the hitbox
+        Math::Vector2 centrePos;
+        Math::Point2 cell; // the cell the object lies in
+
+        // object's velocity and acceleration
+        Math::Vector2 velocity;
+        Math::Vector2 acceleration;
+
+        EntityType type; // which type of entity it is
+        Animations animations; // images used for animating
+        float hp; // object's health
+        float speed; // scalar movement speed
+        int idx; // index of the object in the gameObjects vector
+
+
         bool hasCollision;
-        GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
-            EntityType Type, Math::Point2 Size, float Speed, int Hp);
-        void draw(Gdiplus::Graphics& graphics);
-        void update();
-        Animations animations;
-        // X,Y = number of cells, Width/Height = step for collision detection
+        // X,Y = number of cells, Width/Height = space between collision detection points
         Gdiplus::Rect cellularDimensions;
+        // radius of circle around the hitbox's centre, representing
+        // how close other entities can get to the object
+        float radius = 0.0f; 
+
+
+        // constructor
+        GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
+            EntityType Type, Math::Point2 Size, float Speed, float Hp);
+
+        // draws the object to the graphics object
+        void draw(Gdiplus::Graphics& graphics);
+
+        // calls the behaviour functions, updating member variables
+        void update();
+
 
     private:
         // what should happen when updating the entity's velocity
@@ -94,22 +126,40 @@ namespace Object
         void (*positionFunc)(GameObject*);
         // collision behaviour
         void (*collisionFunc)(GameObject*);
+        
+        // developer tool, draws the collision boundaries for the game object
         void DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Math::Point2 screenPos);
 
+
+        // updates the position of the camera based on the player's position
         void updateBkg();
+
+
+        // choses one image from the animations object that will be drawn to the screen
         Gdiplus::TextureBrush * chooseAnimationStage();
         bool hasAnimation = true; 
-        Gdiplus::TextureBrush* brush; //. if the entity has no animations, this constant brush is used for drawing
+        Gdiplus::TextureBrush* brush; // if the entity has no animations, this constant brush is used for drawing
+        
         Gdiplus::Matrix * brushMultMatrix; // scale for image drawing purposes
         Math::Point2 srcDimensions; // dimensions (in pixels) of the image file
     };
 
     // finds the cell coordinates of a position in world space
     Math::Point2 findCell(Math::Vector2 pos);
+
     // finds the position on the map associated with (x,y) coordinates on the screen
     Math::Vector2 getWorldPosition(Math::Point2 wndPos);
     // translates a position on the map to its relative plaement on the screen
     Math::Point2 getScreenPosition(Math::Vector2 worldPos);
+
+
+
+    // for instantiating game objects
+    void Instantiate(EntityType type, Math::Vector2 pos, Math::Point2 size,
+        float speed, float hp);
+
+    // deletes the specified object
+    void Destroy(GameObject * obj);
 }
 
 #endif

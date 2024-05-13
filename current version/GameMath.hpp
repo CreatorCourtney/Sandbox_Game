@@ -40,8 +40,8 @@ namespace Math
         Point2();
     };
 
-    // finds the unit vector pointing from v0 to v1
-    Vector2 getUnitVector(Vector2 v0, Vector2 v1);
+    // finds the unit vector pointing from p0 to p1
+    Vector2 getUnitVector(Vector2 p0, Vector2 p1);
 
     // time passed since begin_time, updates begin_time to current time
     float DeltaTime(clock_t * begin_time);

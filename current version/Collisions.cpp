@@ -55,7 +55,6 @@ namespace Collisions
                 o->pos = o->pos - disp;
                 o->centrePos = o->centrePos - disp;
                 gameObjects[i]->pos = gameObjects[i]->pos + disp;
-                gameObjects[i]->centrePos = gameObjects[i]->centrePos + disp;
             } 
         }
     }
@@ -107,6 +106,7 @@ namespace Collisions
             if (grid[p.x][p.y]&BARRIER) o->pos.x = p.x*sideLen - o->size.x;
         }
     }
+
     // checks if the hitbox is within a wall, and pushes it out
     void defaultHandleCornerCollisionsWithWalls(Object::GameObject *o)
     {

@@ -56,6 +56,7 @@ namespace Globals {
     *wolfBrush;
 
     Object::Animations playerAnimations;
+    Object::Animations falling_treeAnimations;
     
     Inventory::HotbarSlot * hotbarButtons[6];
 

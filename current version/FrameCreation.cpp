@@ -30,6 +30,7 @@ namespace Frame
         for (int i = 0; i < gameObjects.size(); i++) {
             gameObjects[i]->draw(graphics);
         }
+        
         graphics.FillRectangle(overlayBrush, 0, 0, wndWidth, wndHeight);
 
         Inventory::drawHotbar(graphics);
@@ -162,6 +163,8 @@ namespace Frame
                 // remove building in the cell
                 // if it IS indestructible or not occupied, return
                 if (grid[cell.x][cell.y]&0x8000||!grid[cell.x][cell.y]&0x4000) return;
+                // this number can reenable specified bits, like in case 3
+                int num = 0;
                 
                 switch (grid[cell.x][cell.y]&255)
                 {
@@ -169,12 +172,20 @@ namespace Frame
                         hotbarButtons[0]->count++; break;
                     case 2: // bridge
                         hotbarButtons[1]->count++; break;
-                    case 3: // tree
+                    case 3: { // tree
                         hotbarButtons[0]->count += 5; // get wood
                         // remove tree
                         RemoveTreeFromOverlay(cell);
 
+                        // spawn a falling tree object in its place
+                        Object::Instantiate(Object::Falling_Tree, 
+                            Math::Vector2((cell.x-8.26f)*sideLen, (cell.y-8.98f)*sideLen),
+                            Math::Point2(10*sideLen, 10*sideLen), 0.0f, 1.0f);
+                        
+                        // set num to the barrier bit, so the barrier bit remains enabled
+                        num = BARRIER;
                         break;
+                    }
 
                     default: break;
                 }
@@ -187,6 +198,8 @@ namespace Frame
                 grid[cell.x][cell.y] &= 0xFF9000;
                 if (grid[cell.x][cell.y]&WATER) grid[cell.x][cell.y] |= 0x2000;
                 else grid[cell.x][cell.y] &= ~0x2000;
+
+                grid[cell.x][cell.y] |= num;
                 break;
             }
             default: 

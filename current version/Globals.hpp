@@ -51,12 +51,12 @@ namespace Globals {
     Gdiplus::Bitmap * overlay; // bitmap for the unmoving objects to be drawn above gameObjects
     Gdiplus::TextureBrush * overlayBrush;
 
-    Gdiplus::Image *logImg, *bridgeImg, *waterImg, *emptyImg, *hotbarImg, *treeImg, *wolfImg;
+    Gdiplus::Image *logImg, *bridgeImg, *waterImg, *emptyImg, *hotbarImg, *treeImg, *wolfImg,
+    *falling_treeImg, *stumpImg;
     Gdiplus::TextureBrush *logBrush, *bridgeBrush, *waterBrush, *grassBrush, *hotbarBrush, *treeBrush,
-    *wolfBrush;
+    *wolfBrush, *falling_treeBrush, *stumpBrush;
 
     Object::Animations playerAnimations;
-    Object::Animations falling_treeAnimations;
     
     Inventory::HotbarSlot * hotbarButtons[6];
 

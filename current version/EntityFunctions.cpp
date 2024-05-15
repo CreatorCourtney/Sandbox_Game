@@ -57,23 +57,121 @@ namespace Func
         o->centrePos = o->pos + Math::Vector2(o->size.x/2, o->size.y/2);
     }
 
-    // trees don't move, snap their position to the position they spawned
-    // use this function to decrement the tree's hp, and remove it when the animation ends
+    
+    // moves the base of the falling tree to remain in place as the tree gets rotated
     void fallingTreePositionFunc(Object::GameObject *t)
     {
-        // position might be changed by other entity collisions, but 'centrePos' is not
-        // so, snap 'pos' relative to 'centrePos'
-        t->pos = t->centrePos - Math::Vector2(t->size.x/2, t->size.y/2);
-
-        // lower hp, the object will live for 1 second, so subtract deltaTime
-        t->hp -= deltaTime;
-
         // when hp is <= 0, the time has passed
         if (t->hp <= 0.0f) {
-            // turn off the barrier bit in the cell it occupied
-            grid[t->cell.x][t->cell.y] &= ~BARRIER;
             // remove the object
             Object::Destroy(t);
         }
+    }
+
+
+
+    // animation scripts
+
+    // chooses an animation set depending on which direction the player is facing,
+    // chooses one image from the selected set based on how much the animation has progressed
+    Gdiplus::TextureBrush * playerAnimationScript(Object::GameObject *p, Math::Point2 *screenPos)
+    {
+        // choose vector/index based on direction the object is facing
+
+        // to choose index, multiply the 'stage' member with the associated interval member
+        // then truncate the decimal by typecasting to int. if the index is bigger
+        // than the size of the vector, then set the stage to zero and return the first
+        // image in the vector. otherwise, use the index to choose an image.
+        // also increment the stage by adding deltaTime to it
+
+        Gdiplus::TextureBrush *res;
+
+        switch (p->animations.facing)
+        {
+            case 0: { // forwards
+                int idx = p->animations.stage*p->animations.frontInter;
+                if (idx >= p->animations.front.size()) idx = p->animations.stage = 0;
+                else if (!gameIsPaused) p->animations.stage += deltaTime;
+                res = p->animations.front[idx];
+                break;
+            }
+            case 1: { // back
+                int idx = p->animations.stage*p->animations.backInter;
+                if (idx >= p->animations.back.size()) idx = p->animations.stage = 0;
+                else if (!gameIsPaused) p->animations.stage += deltaTime;
+                res = p->animations.back[idx];
+                break;
+            }
+            case 2: { // left
+                int idx = p->animations.stage*p->animations.leftInter;
+                if (idx >= p->animations.left.size()) idx = p->animations.stage = 0;
+                else if (!gameIsPaused) p->animations.stage += deltaTime;
+                res = p->animations.left[idx];
+                break;
+            }
+            case 3: { // right
+                int idx = p->animations.stage*p->animations.rightInter;
+                if (idx >= p->animations.right.size()) idx = p->animations.stage = 0;
+                else if (!gameIsPaused) p->animations.stage += deltaTime;
+                res = p->animations.right[idx];
+                break;
+            }
+            default: return nullptr;
+        }
+
+        // displacement matric for the brush, so that the image draws correctly
+        p->setBrushMatrix(res, *screenPos);
+        return res;
+    }
+
+    // rotates the tree image, using linear interpolation
+    Gdiplus::TextureBrush * treeFallingAnimations(Object::GameObject *t, Math::Point2 *screenPos)
+    {
+        Gdiplus::TextureBrush *brush = t->brush;
+
+        // find the displacement in x and y of the bottom left of the image to the base of the tree once rotated
+
+        // the object is spawned with 1.0 hp, which is decremented with time,
+        // use the object's hp as the interpolator
+        float interp = 1.0 - t->hp;
+
+
+        /*
+            not gonna explain all the trig here, I found that for an angle, theta, between the line parallel to the tree,
+            and the vertical y axis, the distance of the bottom left corner of the tree from it's original position will be:
+
+            dX = r * sin(theta),    dY = r * (1 - cos(theta)), where r is the height of the tree
+
+            it's unfortunate this uses TWO trig functions evrery frame... if someone could figure out how to do this with 
+            vector arithmetic that would be so cool B)
+        */
+
+
+        // alpha = angle in degrees (for actual rotation), 
+        // theta = angle in radians (for calculations). r = height of the tree
+        float alpha = -100.0f * interp, theta = (PI*0.5555556f) * interp, r = t->size.y;
+        // distance the corner of the object is from its original position
+        float dx = r*sinf(theta), dy = r*(1-cosf(theta));
+
+        // adjust the area the brush is being drawn along the x axis, since otherwise the image would rotate OUT of the drawing
+        // rectangle. This isn't necesary along the y axis, though. just add the y displacement to the tranform matrix
+        screenPos->x -= dx;
+        t->setBrushMatrix(brush, Math::Point2(screenPos->x, screenPos->y+dy));
+
+        // rotate the image to mimic the tree falling
+        brush->RotateTransform(alpha);
+
+        t->hp -= deltaTime; // decrease the object's hp
+
+        return brush;
+    }
+
+
+    // just returns the object's brush member. for objects with no animation
+    Gdiplus::TextureBrush * noAnimation(Object::GameObject *o, Math::Point2 *screenPos)
+    {
+        Gdiplus::TextureBrush *res = o->brush;
+        o->setBrushMatrix(res, *screenPos);
+        return res;
     }
 }

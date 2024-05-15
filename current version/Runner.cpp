@@ -1,3 +1,4 @@
+// include source code
 #include "WndFunctions.cpp"
 #include "FrameCreation.cpp"
 #include "Globals.cpp"
@@ -7,6 +8,7 @@
 #include "Collisions.cpp"
 #include "EntityFunctions.cpp"
 
+// open the exe
 int main() {
     int ext = WndMain(
         GetModuleHandle(NULL),

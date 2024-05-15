@@ -1,6 +1,8 @@
 #ifndef GAME_MATH_HPP
 #define GAME_MATH_HPP
 
+#define PI 3.141592f
+
 #include <ctime>
 #include <cmath>
 

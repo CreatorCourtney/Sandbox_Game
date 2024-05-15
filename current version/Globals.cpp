@@ -30,7 +30,7 @@ namespace Globals {
         hotbarBrush = new Gdiplus::TextureBrush(hotbarImg);
         hotbarBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
-        treeImg = Gdiplus::Image::FromFile(L"images/Tree.png");
+        treeImg = Gdiplus::Image::FromFile(L"images/Tree/Tree.png");
         if (treeImg->GetLastStatus() != Gdiplus::Ok) return 2;
         treeBrush = new Gdiplus::TextureBrush(treeImg);
         treeBrush->SetWrapMode(Gdiplus::WrapModeClamp);
@@ -39,6 +39,16 @@ namespace Globals {
         if (wolfImg->GetLastStatus() != Gdiplus::Ok) return 2;
         wolfBrush = new Gdiplus::TextureBrush(wolfImg);
         wolfBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+        
+        falling_treeImg = Gdiplus::Image::FromFile(L"images/Tree/Falling_Tree.png");
+        if (falling_treeImg->GetLastStatus() != Gdiplus::Ok) return 2;
+        falling_treeBrush = new Gdiplus::TextureBrush(falling_treeImg);
+        falling_treeBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        stumpImg = Gdiplus::Image::FromFile(L"images/Tree/Stump.png");
+        if (stumpImg->GetLastStatus() != Gdiplus::Ok) return 2;
+        stumpBrush = new Gdiplus::TextureBrush(stumpImg);
+        stumpBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
         // load player animations
         {
@@ -71,19 +81,6 @@ namespace Globals {
             playerAnimations = Object::Animations(front, back, left, right, Ft, Bt, Lt, Rt);
         }
 
-        // falling tree animations
-        {
-            std::vector<Gdiplus::TextureBrush*> anim;
-            for (int i = 0; i < 7; i++) {
-                std::wstring txt = L"images/Falling_Tree/"+std::to_wstring(i)+L".png";
-                Gdiplus::Image *img = Gdiplus::Image::FromFile(txt.c_str());
-                Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
-                anim.push_back(brush);
-            }
-            falling_treeAnimations.front = anim;
-            falling_treeAnimations.frontInter = float(anim.size()) / 1.0f;
-        }
-
         // hotbar images
         {
             hotbarButtons[0] = new Inventory::HotbarSlot(Gdiplus::Rect(10, 25,100,100), LOG, 20);
@@ -93,9 +90,6 @@ namespace Globals {
             hotbarButtons[4] = new Inventory::HotbarSlot(Gdiplus::Rect(450,25,100,100), 0, 20);
             hotbarButtons[5] = new Inventory::HotbarSlot(Gdiplus::Rect(560,58, 30, 67), 0, 20);
         }
-        
-
-        
         
         return 0;
     }

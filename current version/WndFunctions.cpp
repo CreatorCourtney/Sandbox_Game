@@ -13,7 +13,7 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
     Globals::player = Globals::gameObjects[0];
 
     // spawn wolves for testing
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 1; i++) {
         Object::Instantiate(Object::Wolf, Math::Vector2(500.0f, 300.0f), 
             Math::Point2(50*Globals::g_scale, 50*Globals::g_scale), 
             80.0f*Globals::g_scale, 5.0f);

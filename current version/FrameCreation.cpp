@@ -131,9 +131,10 @@ namespace Frame
         // update background image for drawing
         Gdiplus::Image* img = nullptr;
         int x = cell.x*sideLen, y = cell.y*sideLen;
+
         switch (objType)
         {
-            case TREE: {
+            case TREE:
                 // empty grass tile drawn where the base is
                 img = emptyImg;
                 
@@ -141,7 +142,7 @@ namespace Frame
 
                 grid[cell.x][cell.y] |= TREE;
                 break;
-            }
+                
             case LOG: 
                 // cell is occupied or out of logs
                 if (grid[cell.x][cell.y]&0x4000||!hotbarButtons[0]->count) return;
@@ -159,6 +160,16 @@ namespace Frame
                 hotbarButtons[1]->count--;
                 break;
 
+            case STUMP:
+                // draw the empty tile first, in case of loading a map with a stump, but not a tree
+                DrawImageToBitmap(background, emptyImg, x, y);
+
+                // only occurs when a tree gets removed, thus the cell could only have been TREE prior.
+                // so, there is no issue just settig the cell to STUMP, no need for |=
+                img = stumpImg;
+                grid[cell.x][cell.y] = STUMP;
+                break;
+
             case EMPTY: {
                 // remove building in the cell
                 // if it IS indestructible or not occupied, return
@@ -170,8 +181,10 @@ namespace Frame
                 {
                     case 1: // log
                         hotbarButtons[0]->count++; break;
+
                     case 2: // bridge
                         hotbarButtons[1]->count++; break;
+
                     case 3: { // tree
                         hotbarButtons[0]->count += 5; // get wood
                         // remove tree
@@ -179,13 +192,18 @@ namespace Frame
 
                         // spawn a falling tree object in its place
                         Object::Instantiate(Object::Falling_Tree, 
-                            Math::Vector2((cell.x-8.26f)*sideLen, (cell.y-8.98f)*sideLen),
+                            Math::Vector2((cell.x-1)*sideLen, (cell.y-9)*sideLen),
                             Math::Point2(10*sideLen, 10*sideLen), 0.0f, 1.0f);
-                        
-                        // set num to the barrier bit, so the barrier bit remains enabled
-                        num = BARRIER;
-                        break;
+
+                        // place a stump where the tree once stood
+                        PlaceObjectInCell(cell, STUMP);
+
+                        // everything else handled in the STUMP case. don't break, just return
+                        return;
                     }
+
+                    case 4: // stump
+                        hotbarButtons[0]->count++; // get wood break;
 
                     default: break;
                 }
@@ -198,15 +216,16 @@ namespace Frame
                 grid[cell.x][cell.y] &= 0xFF9000;
                 if (grid[cell.x][cell.y]&WATER) grid[cell.x][cell.y] |= 0x2000;
                 else grid[cell.x][cell.y] &= ~0x2000;
-
-                grid[cell.x][cell.y] |= num;
                 break;
             }
+
             default: 
                 if (grid[cell.x][cell.y]&WATER) img = waterImg;
                 else img = emptyImg;
                 break;
         }
+
+        // draw the object placed onto the image bitmap
         if (img != nullptr) DrawImageToBitmap(background, img, x, y);
         if (updateBkgBrush) {
             bkgBrush = new Gdiplus::TextureBrush(background);

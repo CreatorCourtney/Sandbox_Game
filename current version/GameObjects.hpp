@@ -29,10 +29,13 @@ byte3:
 */
 #define EMPTY    0b0000000000000000
 #define BARRIER  0b0010000000000000
+#define OCCUPIED 0b0100000000000000
 #define WATER    0b0001000000000000
+
 #define LOG      0b0110000000000001
 #define BRIDGE   0b0100000000000010
 #define TREE     0b0110000000000011
+#define STUMP    0b0110000000000100
 
 typedef int CellObject;
 
@@ -95,6 +98,9 @@ namespace Object
 
         EntityType type; // which type of entity it is
         Animations animations; // images used for animating
+        Gdiplus::TextureBrush* brush; // if the entity has no animations, this constant brush is used for drawing
+        
+        
         float hp; // object's health
         float speed; // scalar movement speed
         int idx; // index of the object in the gameObjects vector
@@ -112,11 +118,17 @@ namespace Object
         GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
             EntityType Type, Math::Point2 Size, float Speed, float Hp);
 
-        // draws the object to the graphics object
-        void draw(Gdiplus::Graphics& graphics);
 
         // calls the behaviour functions, updating member variables
         void update();
+
+
+        // public drawing functions
+
+        // draws the object to the graphics object
+        void draw(Gdiplus::Graphics& graphics);
+        // prepares a texturebrush to be drawn to the screen by setting the matrix displacement and scale
+        void setBrushMatrix(Gdiplus::TextureBrush *b, Math::Point2 disp);
 
 
     private:
@@ -136,11 +148,11 @@ namespace Object
 
 
         // choses one image from the animations object that will be drawn to the screen
-        Gdiplus::TextureBrush * chooseAnimationStage();
-        bool hasAnimation = true; 
-        Gdiplus::TextureBrush* brush; // if the entity has no animations, this constant brush is used for drawing
+        Gdiplus::TextureBrush* (*animationScript)(GameObject*, Math::Point2*);
         
-        Gdiplus::Matrix * brushMultMatrix; // scale for image drawing purposes
+        bool hasAnimation = true; 
+        
+        Math::Point2 brushScale; // sclae for image drawing purposes
         Math::Point2 srcDimensions; // dimensions (in pixels) of the image file
     };
 

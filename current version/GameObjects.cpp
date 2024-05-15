@@ -33,8 +33,6 @@ namespace Object
     EntityType Type, Math::Point2 Size, float Speed, float Hp)
     : pos(Pos), velocity(Velocity), type(Type), size(Size), speed(Speed), hp(Hp) 
     {
-        centrePos = pos + Math::Vector2(size.x/2, size.y/2);
-
         // index is the size of the gameObjects vector, which gets incremented after the creation of this
         idx = gameObjects.size();
 
@@ -44,10 +42,14 @@ namespace Object
                 // assign texture variables
                 animations = playerAnimations;
                 srcDimensions = {25, 25};
+                // animation script
+                animationScript = Func::playerAnimationScript;
+
                 // attributes
                 cellularDimensions = {1, 1, size.x, size.y};
                 hasCollision = true;
                 radius = Math::Max(size.x/2, size.y/2);
+                centrePos = pos + Math::Vector2(size.x/2, size.y/2);
                 
                 // behaviour functions
                 velocityFunc = Func::playerVelocityFunc;
@@ -66,10 +68,14 @@ namespace Object
                 // assign texture variables
                 brush = wolfBrush;
                 srcDimensions = {50, 50};
+                // animation script
+                animationScript = Func::noAnimation;
+
                 // attributes
                 hasAnimation = false;
                 hasCollision = true;
                 radius = Math::Max(size.x/2, size.y/2);
+                centrePos = pos + Math::Vector2(size.x/2, size.y/2);
                 
                 // behaviour functions
                 velocityFunc = Func::wolfVelocityFunc;
@@ -82,10 +88,14 @@ namespace Object
 
             case Falling_Tree:
                 // assign texture variables
-                animations = falling_treeAnimations;
                 srcDimensions = {250, 250};
+                brush = falling_treeBrush;
+                // animation script
+                animationScript = Func::treeFallingAnimations;
+
                 // attributes
                 hasCollision = false;
+                centrePos = pos;
 
                 // behaviour functions
                 velocityFunc = Func::zeroVelocityFunc;
@@ -93,15 +103,16 @@ namespace Object
                 collisionFunc = Collisions::defaultCollisionFunction;
 
                 // misc
-                cell = Math::Point2((pos.x/sideLen)+8.26f, (pos.y/sideLen)+8.98f);
+                cell = Math::Point2((pos.x/sideLen)+1, (pos.y/sideLen)+9);
                 break;
         }
 
         // brush mult, for drawing the entity's texture to scale
         float   scaleX = (float)size.x/(float)srcDimensions.x, 
                 scaleY = (float)size.y/(float)srcDimensions.y;
-        brushMultMatrix = new Gdiplus::Matrix(scaleX, 0.0f, 0.0f, scaleY, 0.0f, 0.0f);
+        brushScale = Math::Point2(scaleX, scaleY);
 
+        
         // assigning the number of cells, and space between collision points
         if (Type != Player) {
             int numX = size.x/sideLen+1, numY = size.y/sideLen+1,
@@ -139,15 +150,7 @@ namespace Object
             screenPos.y<-size.y || screenPos.y>wndHeight) return;
 
         // select an image (TextureBrush) to be drawn
-        // if the object has animation, choose from the 'animations' object, otherwise,
-        // use the 'brush' member
-        Gdiplus::TextureBrush * imgBrush = (hasAnimation)? chooseAnimationStage() : brush;
-
-        // displacement matric for the brush, so that the image draws correctly
-        Gdiplus::Matrix matrix(1.0f, 0.0f, 0.0f, 1.0f, screenPos.x, screenPos.y);
-        imgBrush->SetTransform(&matrix);
-        // use the 'brushMultMatrix' member to scale the brush, so the image is drawn to scale
-        imgBrush->MultiplyTransform(brushMultMatrix);
+        Gdiplus::TextureBrush * imgBrush = animationScript(this, &screenPos);
 
         // draw the image
         graphics.FillRectangle(imgBrush, screenPos.x, screenPos.y, size.x, size.y);
@@ -186,46 +189,6 @@ namespace Object
         bkgState = bottom|top|right|left;
     }
 
-    // choses one image from the animations object that will be drawn to the screen
-    Gdiplus::TextureBrush * GameObject::chooseAnimationStage() 
-    {   
-        // choose vector/index based on direction the object is facing
-
-        // to choose index, multiply the 'stage' member with the associated interval member
-        // then truncate the decimal by typecasting to int. if the index is bigger
-        // than the size of the vector, then set the stage to zero and return the first
-        // image in the vector. otherwise, use the index to choose an image.
-        // also increment the stage by adding deltaTime to it
-
-        switch (animations.facing)
-        {
-            case 0: { // forwards
-                int idx = animations.stage*animations.frontInter;
-                if (idx >= animations.front.size()) idx = animations.stage = 0;
-                else if (!gameIsPaused) animations.stage += deltaTime;
-                return animations.front[idx];
-            }
-            case 1: { // back
-                int idx = animations.stage*animations.backInter;
-                if (idx >= animations.back.size()) idx = animations.stage = 0;
-                else if (!gameIsPaused) animations.stage += deltaTime;
-                return animations.back[idx];
-            }
-            case 2: { // left
-                int idx = animations.stage*animations.leftInter;
-                if (idx >= animations.left.size()) idx = animations.stage = 0;
-                else if (!gameIsPaused) animations.stage += deltaTime;
-                return animations.left[idx];
-            }
-            case 3: { // right
-                int idx = animations.stage*animations.rightInter;
-                if (idx >= animations.right.size()) idx = animations.stage = 0;
-                else if (!gameIsPaused) animations.stage += deltaTime;
-                return animations.right[idx];
-            }
-            default: return nullptr;
-        }
-    }
 
     // finds the cell coordinates of a position in world space
     Math::Point2 findCell(Math::Vector2 pos) 
@@ -324,6 +287,20 @@ namespace Object
         }
         return Math::Point2(x, y);
     }
+
+
+
+
+    // public drawing functions
+
+    // prepares a texturebrush to be drawn to the screen by setting the matrix displacement and scale
+    void GameObject::setBrushMatrix(Gdiplus::TextureBrush *b, Math::Point2 disp)
+    {
+        Gdiplus::Matrix matrix(brushScale.x, 0.0f, 0.0f, brushScale.y, disp.x, disp.y);
+        b->SetTransform(&matrix);
+    }
+
+
 
 
     // for instantiating game objects

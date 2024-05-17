@@ -7,6 +7,7 @@
 #include "Inventory.cpp"
 #include "Collisions.cpp"
 #include "EntityFunctions.cpp"
+#include "PlayerInput.cpp"
 
 // open the exe
 int main() {

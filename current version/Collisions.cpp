@@ -182,6 +182,83 @@ namespace Collisions
         if (Math::absf(disp.x)<Math::absf(disp.y)) o->pos.x += disp.x;
         else o->pos.y += disp.y;
     }
+
+
+
+    // for an item sitting still, collide with non-items normally, but when colliding
+    // with another item, combine stacks, if possible
+    void stationaryItemCollisionFunction(Object::GameObject *item)
+    {
+        // do nothing if the object doesn't have collision, such as when it's being held
+        if (!item->hasCollision) return;
+
+        itemsHandleCOllisionsWithGameObjects(item);
+
+        // collide with other game objects
+        defaultHandleCollisionsWithGameObjects(item);
+        // handle everything else AFTER other entities, to avoid being pushed into walls/oob
+
+        // world borders
+        defaultCollideWithWorldBorders(item);
+
+        // walls
+        defaultHandleSideCollisionsWithWalls(item);
+        defaultHandleCornerCollisionsWithWalls(item);
+    }
+
+
+    void itemsHandleCOllisionsWithGameObjects(Object::GameObject *item)
+    {
+        for (int i = 0; i < gameObjects.size(); i++)
+        {
+            // doesn't collide with itself or objects that have no collision
+            if (gameObjects[i]==item || !gameObjects[i]->hasCollision) continue;
+
+            // find the displacement vector between the two objects
+            Math::Vector2 disp = gameObjects[i]->centrePos - item->centrePos;
+            // break up objects directly on each other
+            if (disp == Math::Zero2) disp = Math::One2;
+
+            // d is the magnitude of the displacement,
+            // r is the sum of the radii of the two objects
+            float d = disp.length(), r = item->radius+gameObjects[i]->radius;
+            // if d < r, the objects are too close to each other and need to be pushed apart
+
+            if (d < r) 
+            {
+                // collided with the same item, attempt to combine
+                if (gameObjects[i]->type == item->type)
+                {
+                    // add the other stack's item to this stack's, as far as is possible
+                    // items store their count in their hp variable
+
+                    int spaceAvailable = item->maxHP-item->hp; // how many more items can be held
+                    
+                    // number of items being transfered
+                    int transfer = Math::Min(gameObjects[i]->hp, spaceAvailable);
+
+                    // transfer the items
+                    item->hp += transfer;
+                    gameObjects[i]->hp -= transfer;
+                }
+
+                // r - d represents how big the overlap is. to move both objects evenly,
+                // they need to move (r-d)/2 in opposite direction
+                // normalise the displacement to find the direction the objects need to move
+                disp.normalise();
+                // multiply the unit vector by the distance they need to move
+                disp = disp * (r-d)/2;
+
+                // update the position of both objects
+                // use - for o itself and + for the other object, so they move APART
+                item->pos = item->pos - disp;
+                item->centrePos = item->centrePos - disp;
+                gameObjects[i]->pos = gameObjects[i]->pos + disp;
+            }
+        }
+    }
+
+
 }
 
 // developer tool, draws the collision boundaries for the game object
@@ -191,9 +268,24 @@ void Object::GameObject::DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Ma
         Gdiplus::SolidBrush redBrush(red), blueBrush(blue);
         Gdiplus::Pen pen(blue), pen2(green), pen3(red);
 
+        // outline bounding box
         graphics.DrawRectangle(&pen, screenPos.x, screenPos.y, size.x, size.y);
+        // centre of bounding box
+        graphics.FillEllipse(&blueBrush, centreScreenPos.x-d, centreScreenPos.y-d, dotSize, dotSize);
+        
+
+        // draw arrow in direction of velocity
+        Math::Vector2 centrePosVec(centreScreenPos.x, centreScreenPos.y);
+        Math::Vector2 p = centrePosVec + velocity/2.5f;
+        graphics.DrawLine(&pen2, Gdiplus::Point(centreScreenPos.x, centreScreenPos.y), Gdiplus::Point(p.x, p.y));
+        
+        
+        // for visualising collision algorithms
+        if (!hasCollision) return;
+        // green circle represents collision radius for game objects
         graphics.DrawEllipse(&pen2, centreScreenPos.x-radius, centreScreenPos.y-radius, 2*radius, 2*radius);
 
+        // red dots represent points where the game checks for wall collisions
         // top side
         for (int i = 0; i <= cellularDimensions.X; i++) {
             int x = screenPos.x+cellularDimensions.Width*i-d,
@@ -218,12 +310,5 @@ void Object::GameObject::DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Ma
                 x = screenPos.x+size.x-d;
             graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
         }
-        graphics.FillEllipse(&blueBrush, centreScreenPos.x-d, centreScreenPos.y-d, dotSize, dotSize);
 
-        // draw arrow in direction of velocity
-        Math::Vector2 centrePosVec(centreScreenPos.x, centreScreenPos.y);
-        Math::Vector2 p = centrePosVec + velocity/2.5f;
-
-        graphics.DrawLine(&pen2, Gdiplus::Point(centreScreenPos.x, centreScreenPos.y), 
-        Gdiplus::Point(p.x, p.y));
     }

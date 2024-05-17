@@ -120,119 +120,7 @@ namespace Frame
         graphics.FillRectangle(bkgBrush, 0, 0, wndWidth, wndHeight);
     }
 
-    // for convenience
-    void PlaceObjectInCell(Math::Point2 cell, int objType) {
-        PlaceObjectInCell(cell, objType, true);
-    }
-
-    void PlaceObjectInCell(Math::Point2 cell, int objType, bool updateBkgBrush) {
-        if (cell.x<0||cell.x>=grid.size()||cell.y<0||cell.y>=grid[0].size()) return;
-
-        // update background image for drawing
-        Gdiplus::Image* img = nullptr;
-        int x = cell.x*sideLen, y = cell.y*sideLen;
-
-        switch (objType)
-        {
-            case TREE:
-                // empty grass tile drawn where the base is
-                img = emptyImg;
-                
-                AddTreeToOverlay(cell, updateBkgBrush);
-
-                grid[cell.x][cell.y] |= TREE;
-                break;
-                
-            case LOG: 
-                // cell is occupied or out of logs
-                if (grid[cell.x][cell.y]&0x4000||!hotbarButtons[0]->count) return;
-                img = logImg;
-                grid[cell.x][cell.y] |= LOG;
-                hotbarButtons[0]->count--;
-                break;
-
-            case BRIDGE:
-                // cell is occupied or out of bridges
-                if (grid[cell.x][cell.y]&0x4000||!hotbarButtons[1]->count) return;
-                img = bridgeImg;
-                grid[cell.x][cell.y] |= BRIDGE;
-                grid[cell.x][cell.y] &= ~0x2000; // turn off barrier bit
-                hotbarButtons[1]->count--;
-                break;
-
-            case STUMP:
-                // draw the empty tile first, in case of loading a map with a stump, but not a tree
-                DrawImageToBitmap(background, emptyImg, x, y);
-
-                // only occurs when a tree gets removed, thus the cell could only have been TREE prior.
-                // so, there is no issue just settig the cell to STUMP, no need for |=
-                img = stumpImg;
-                grid[cell.x][cell.y] = STUMP;
-                break;
-
-            case EMPTY: {
-                // remove building in the cell
-                // if it IS indestructible or not occupied, return
-                if (grid[cell.x][cell.y]&0x8000||!grid[cell.x][cell.y]&0x4000) return;
-                // this number can reenable specified bits, like in case 3
-                int num = 0;
-                
-                switch (grid[cell.x][cell.y]&255)
-                {
-                    case 1: // log
-                        hotbarButtons[0]->count++; break;
-
-                    case 2: // bridge
-                        hotbarButtons[1]->count++; break;
-
-                    case 3: { // tree
-                        hotbarButtons[0]->count += 5; // get wood
-                        // remove tree
-                        RemoveTreeFromOverlay(cell);
-
-                        // spawn a falling tree object in its place
-                        Object::Instantiate(Object::Falling_Tree, 
-                            Math::Vector2((cell.x-1)*sideLen, (cell.y-9)*sideLen),
-                            Math::Point2(10*sideLen, 10*sideLen), 0.0f, 1.0f);
-
-                        // place a stump where the tree once stood
-                        PlaceObjectInCell(cell, STUMP);
-
-                        // everything else handled in the STUMP case. don't break, just return
-                        return;
-                    }
-
-                    case 4: // stump
-                        hotbarButtons[0]->count++; // get wood break;
-
-                    default: break;
-                }
-
-                if (grid[cell.x][cell.y]&WATER) img = waterImg;
-                else img = emptyImg;
-                // preserve bits 16 (indestructible), and 13, 17-24 (water), 
-                // all others to 0
-                // bit 14: on if water (bit 13), off otherwise
-                grid[cell.x][cell.y] &= 0xFF9000;
-                if (grid[cell.x][cell.y]&WATER) grid[cell.x][cell.y] |= 0x2000;
-                else grid[cell.x][cell.y] &= ~0x2000;
-                break;
-            }
-
-            default: 
-                if (grid[cell.x][cell.y]&WATER) img = waterImg;
-                else img = emptyImg;
-                break;
-        }
-
-        // draw the object placed onto the image bitmap
-        if (img != nullptr) DrawImageToBitmap(background, img, x, y);
-        if (updateBkgBrush) {
-            bkgBrush = new Gdiplus::TextureBrush(background);
-            bkgBrush->SetWrapMode(Gdiplus::WrapModeClamp);
-        }
-        // need to preserve water bits... (9-13)
-    }
+    
 
     void DrawCell(Math::Point2 cell, Gdiplus::Graphics& graphics) {
         Gdiplus::Image * img;
@@ -279,9 +167,10 @@ namespace Frame
             for (int y = 0; y < ny; y++) {
                 Math::Point2 cell(x, y);
                 int type = grid[cell.x][cell.y];
-                PlaceObjectInCell(cell, type, false);
+                Input::PlaceObjectInCell(cell, type, false);
             }
         }
+
         bkgBrush = new Gdiplus::TextureBrush(background);
         bkgBrush->SetWrapMode(Gdiplus::WrapModeClamp);
         overlayBrush = new Gdiplus::TextureBrush(overlay);

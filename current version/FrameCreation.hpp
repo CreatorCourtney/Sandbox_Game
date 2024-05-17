@@ -8,6 +8,7 @@
 #include "Globals.hpp"
 #include "GameObjects.hpp"
 #include "Inventory.hpp"
+#include "PlayerInput.hpp"
 
 namespace Frame 
 {
@@ -18,8 +19,6 @@ namespace Frame
     void ShowDebugInfo(Gdiplus::Graphics& graphics);
 
     void DrawBackgroundSection(Gdiplus::Graphics& graphics);
-    void PlaceObjectInCell(Math::Point2 cell, int objType);
-    void PlaceObjectInCell(Math::Point2 cell, int objType, bool updateBkgBrush);
     void DrawCell(Math::Point2 cell, Gdiplus::Graphics& graphics);
     void shadeCell(Gdiplus::Graphics& graphics, Math::Point2 cell);
 

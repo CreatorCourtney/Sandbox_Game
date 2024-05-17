@@ -1,5 +1,7 @@
 #include "WndFunctions.hpp"
 
+using namespace Globals;
+
 int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     // FreeConsole(); // hides console
@@ -8,16 +10,25 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
 
     // instantiate the player
     Object::Instantiate(Object::Player, Math::Vector2(400.0f, 200.0f),
-        Math::Point2(50*Globals::g_scale, 50*Globals::g_scale),
-        100.0f*Globals::g_scale, 5.0f);
-    Globals::player = Globals::gameObjects[0];
+        Math::Point2(50*g_scale, 50*g_scale),
+        100.0f*g_scale, 5.0f);
+    player = gameObjects[0];
 
     // spawn wolves for testing
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 0; i++) {
         Object::Instantiate(Object::Wolf, Math::Vector2(500.0f, 300.0f), 
-            Math::Point2(50*Globals::g_scale, 50*Globals::g_scale), 
-            80.0f*Globals::g_scale, 5.0f);
+            Math::Point2(50*g_scale, 50*g_scale), 
+            80.0f*g_scale, 3);
     }
+
+    // spawn items for testing
+    Object::Instantiate(Object::Log_Item, Math::Vector2(700.0f, 300.0f),
+        Math::Point2(40*g_scale, 40*g_scale),
+        0.0f, 13);
+
+    Object::Instantiate(Object::Log_Item, Math::Vector2(500.0f, 300.0f),
+        Math::Point2(40*g_scale, 40*g_scale),
+        0.0f, 2);
 
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
 
@@ -37,9 +48,9 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
         L"WIP viddy game :)",   // window text
         WS_OVERLAPPEDWINDOW,    // window style
         // position and size
-        (GetSystemMetrics(SM_CXFULLSCREEN)-Globals::viewRect.Width)/2, 
-        (GetSystemMetrics(SM_CYFULLSCREEN)-Globals::viewRect.Height)/2,
-        Globals::viewRect.Width, Globals::viewRect.Height,
+        (GetSystemMetrics(SM_CXFULLSCREEN)-viewRect.Width)/2, 
+        (GetSystemMetrics(SM_CYFULLSCREEN)-viewRect.Height)/2,
+        viewRect.Width, viewRect.Height,
         NULL,       // parent window
         NULL,       // menu
         hInstance,  // instance handle
@@ -59,11 +70,11 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
         SetCursor(cursor);
         
         // update DeltaTime
-        Globals::deltaTime = Math::DeltaTime(&Globals::begin_time);
+        deltaTime = Math::DeltaTime(&begin_time);
 
         // update all current game objects
-        for (int i = 0; i < Globals::gameObjects.size(); i++) {
-            Globals::gameObjects[i]->update();
+        for (int i = 0; i < gameObjects.size(); i++) {
+            gameObjects[i]->update();
         }
 
         TranslateMessage(&msg);
@@ -92,24 +103,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_SIZE: {
             int newWidth = LOWORD(lParam), newHeight = HIWORD(lParam);
-            Globals::wndWidth = newWidth; Globals::wndHeight = newHeight;
+            wndWidth = newWidth; wndHeight = newHeight;
 
             // recreate hOffscreenBitmap to fit new screen size
-            HBITMAP hNewBitmap = CreateCompatibleBitmap(Globals::g_hdc, newWidth, newHeight);
+            HBITMAP hNewBitmap = CreateCompatibleBitmap(g_hdc, newWidth, newHeight);
             if (hNewBitmap != NULL) {
                 // create a new DC for the newly sized window
-                SelectObject(Globals::hOffscreenDC, hNewBitmap);
-                DeleteObject(Globals::hOffscreenBitmap);
-                Globals::hOffscreenBitmap = hNewBitmap;
+                SelectObject(hOffscreenDC, hNewBitmap);
+                DeleteObject(hOffscreenBitmap);
+                hOffscreenBitmap = hNewBitmap;
 
-                Globals::wndScale = Math::Vector2(
-                    (float)Globals::wndWidth/GetSystemMetrics(SM_CXFULLSCREEN),
-                    (float)Globals::wndHeight/GetSystemMetrics(SM_CYFULLSCREEN)
+                wndScale = Math::Vector2(
+                    (float)wndWidth/GetSystemMetrics(SM_CXFULLSCREEN),
+                    (float)wndHeight/GetSystemMetrics(SM_CYFULLSCREEN)
                 );
 
-                Globals::currUIScale = 
+                currUIScale = 
                     Math::clampf(0.5f, 1.0f, 
-                    Math::minf(Globals::wndScale.x, Globals::wndScale.y))*Globals::UIScale;
+                    Math::minf(wndScale.x, wndScale.y))*UIScale;
             }
             break;
         }
@@ -118,63 +129,67 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             switch (wParam)
             {
                 case 0x57: // w
-                    Globals::inputKeys |= 8; break;
+                    inputKeys |= 8; break;
                 case 0x41: // a
-                    Globals::inputKeys |= 4; break;
+                    inputKeys |= 4; break;
                 case 0x53: // s
-                    Globals::inputKeys |= 2; break;
+                    inputKeys |= 2; break;
                 case 0x44: // d
-                    Globals::inputKeys |= 1; break;
+                    inputKeys |= 1; break;
                 case VK_SHIFT:
-                    Globals::inputKeys |= 16; break;
+                    inputKeys |= 16; break;
                 case VK_ESCAPE:
-                    Globals::gameIsPaused = !Globals::gameIsPaused;
+                    gameIsPaused = !gameIsPaused;
                     break;
                 case VK_F11:
-                    ToggleFullscreen(hwnd, Globals::viewRect.Width, Globals::viewRect.Height); 
+                    ToggleFullscreen(hwnd, viewRect.Width, viewRect.Height); 
                     break;
                 case VK_F9:
-                    Globals::debuggingTools ^= 1; break;
+                    debuggingTools ^= 1; break;
                 case VK_F8:
-                    Globals::debuggingTools ^= 2; break;
+                    debuggingTools ^= 2; break;
                 case VK_F7:
-                    Globals::player->hasCollision = !Globals::player->hasCollision;
+                    player->hasCollision = !player->hasCollision;
                     break;
                 case VK_F6:
-                    Globals::debuggingTools ^= 4; break;
+                    debuggingTools ^= 4; break;
             } break;
 
         case WM_KEYUP:
             switch (wParam)
             {
                 case 0x57: // w
-                    Globals::inputKeys &= ~8; break;
+                    inputKeys &= ~8; break;
                 case 0x41: // a
-                    Globals::inputKeys &= ~4; break;
+                    inputKeys &= ~4; break;
                 case 0x53: // s
-                    Globals::inputKeys &= ~2; break;
+                    inputKeys &= ~2; break;
                 case 0x44: // d
-                    Globals::inputKeys &= ~1; break;
+                    inputKeys &= ~1; break;
                 case VK_SHIFT:
-                    Globals::inputKeys &= ~16; break;
+                    inputKeys &= ~16; break;
             } break;
 
         case WM_LBUTTONDOWN: {
-            if (Globals::gameIsPaused) break;
+            if (gameIsPaused) break;
             int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
 
             switch (Inventory::buttonPress(x, y))
             {
                 case 0: {// clicked somewhere on the map
+                    // check all the items to see if you clicked on one
+                    
+
+
                     Math::Vector2 worldPos = Object::getWorldPosition(Math::Point2(x,y));
                     Math::Point2 cell = Object::findCell(worldPos);
-                    Frame::PlaceObjectInCell(cell, Globals::selectedObj);
+                    Input::PlaceObjectInCell(cell, selectedObj);
                     break;
                 }
                 case HOTBAR_1:
-                    Globals::selectedObj = LOG; break;
+                    selectedObj = LOG; break;
                 case HOTBAR_2:
-                    Globals::selectedObj = BRIDGE; break;
+                    selectedObj = BRIDGE; break;
                 case HOTBAR_3:
                     std::cout << "slot 3\n"; break;
                 case HOTBAR_4:
@@ -189,7 +204,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         case WM_RBUTTONDOWN: {
-            if (Globals::gameIsPaused) break;
+            if (gameIsPaused) break;
             int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
 
             switch (Inventory::buttonPress(x, y))
@@ -197,7 +212,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 case 0: {// clicked somewhere on the map
                     Math::Vector2 worldPos = Object::getWorldPosition(Math::Point2(x,y));
                     Math::Point2 cell = Object::findCell(worldPos);
-                    Frame::PlaceObjectInCell(cell, EMPTY);
+                    Input::PlaceObjectInCell(cell, EMPTY);
                     break;
                 }
                 case HOTBAR_1:
@@ -217,15 +232,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             } break;
         }
 
+        case WM_MOUSEMOVE: {
+            // position of the mouse in the window
+            int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
+            // update the global variable storing this position
+            mousePos = Math::Point2(x, y);
+            
+            break;
+        }
+
         case WM_PAINT:
-            Frame::CreateBufferFrame(hwnd, Globals::g_hdc);
-            CopyOffscreenToWindow(hwnd, Globals::g_hdc);
+            Frame::CreateBufferFrame(hwnd, g_hdc);
+            CopyOffscreenToWindow(hwnd, g_hdc);
             break;
 
         case WM_DESTROY:
-            DeleteObject(Globals::hOffscreenBitmap);
-            DeleteDC(Globals::hOffscreenDC);
-            ReleaseDC(hwnd, Globals::g_hdc);
+            DeleteObject(hOffscreenBitmap);
+            DeleteDC(hOffscreenDC);
+            ReleaseDC(hwnd, g_hdc);
             PostQuitMessage(0);
             break;
 
@@ -240,32 +264,32 @@ void InitialiseOffscreenDC(HWND hwnd)
     // get dimensions of the visible window
     RECT clientRect;
     GetClientRect(hwnd, &clientRect);
-    Globals::wndWidth = clientRect.right-clientRect.left;
-    Globals::wndHeight = clientRect.bottom-clientRect.top;
+    wndWidth = clientRect.right-clientRect.left;
+    wndHeight = clientRect.bottom-clientRect.top;
 
     // create a compatible DC for the offscreen bitmap
-    Globals::g_hdc = GetDC(hwnd);
-    Globals::hOffscreenDC = CreateCompatibleDC(Globals::g_hdc);
-    Globals::hOffscreenBitmap = CreateCompatibleBitmap(Globals::g_hdc, Globals::wndWidth, Globals::wndHeight);
-    SelectObject(Globals::hOffscreenDC, Globals::hOffscreenBitmap);
+    g_hdc = GetDC(hwnd);
+    hOffscreenDC = CreateCompatibleDC(g_hdc);
+    hOffscreenBitmap = CreateCompatibleBitmap(g_hdc, wndWidth, wndHeight);
+    SelectObject(hOffscreenDC, hOffscreenBitmap);
 
-    RECT rect = { 0, 0, Globals::wndWidth, Globals::wndHeight };
+    RECT rect = { 0, 0, wndWidth, wndHeight };
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
-    FillRect(Globals::hOffscreenDC, &rect, bkg);
+    FillRect(hOffscreenDC, &rect, bkg);
     DeleteObject(bkg); // deallocate memory for bkg brush
 
-    Globals::wndScale = Math::Vector2(
-        (float)Globals::wndWidth/GetSystemMetrics(SM_CXFULLSCREEN),
-        (float)Globals::wndHeight/GetSystemMetrics(SM_CYFULLSCREEN)
+    wndScale = Math::Vector2(
+        (float)wndWidth/GetSystemMetrics(SM_CXFULLSCREEN),
+        (float)wndHeight/GetSystemMetrics(SM_CYFULLSCREEN)
     );
-    Globals::currUIScale = 
+    currUIScale = 
         Math::clampf(0.5f, 1.0f, 
-        Math::minf(Globals::wndScale.x, Globals::wndScale.y))*Globals::UIScale;
+        Math::minf(wndScale.x, wndScale.y))*UIScale;
 }
 
 void CopyOffscreenToWindow(HWND hwnd, HDC hdc)
 {
-    BitBlt(hdc, 0, 0, Globals::wndWidth, Globals::wndHeight, Globals::hOffscreenDC, 0, 0, SRCCOPY);
+    BitBlt(hdc, 0, 0, wndWidth, wndHeight, hOffscreenDC, 0, 0, SRCCOPY);
 }
 
 void ToggleFullscreen(HWND hwnd, int width, int height)

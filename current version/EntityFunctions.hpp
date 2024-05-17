@@ -12,8 +12,8 @@ namespace Func {
     // gives wolf velocity in the direction of the player
     void wolfVelocityFunc(Object::GameObject *w);
 
-    // objects with zero velocity do nothing when updating
-    void zeroVelocityFunc(Object::GameObject *o);
+    // adds object's acceleration to their velocity
+    void defaultVelocityFunc(Object::GameObject *o);
 
 
     // position functions

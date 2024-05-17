@@ -113,6 +113,9 @@ namespace Math
     int Max(int a, int b) { // max for ints
         return (a>b)? a : b;
     }
+    int Min(int a, int b) { // min for ints
+        return (a<b)? a : b;
+    }
 
     float absf(float a) { // abs for ints
         return (a<0.0f)? -a : a;

@@ -51,6 +51,7 @@ namespace Math
     float minf(float a, float b); // min for floats
     float maxf(float a, float b); // max for floats
     int Max(int a, int b); // max for ints
+    int Min(int a, int b); // min for ints
     float absf(float a); // abs for floats
     float clampf(float min, float max, float x); // clamps x between 2 values, for floats
 }

@@ -33,7 +33,8 @@ namespace Func
 
 
     // gives wolf velocity in the direction of the player
-    void wolfVelocityFunc(Object::GameObject *w) {
+    void wolfVelocityFunc(Object::GameObject *w) 
+    {
         // a unit vector from the wolf's position to the player's position
         Math::Vector2 dir = Math::getUnitVector(w->centrePos, player->centrePos);
         // moves in the direction of the unit vector, with a magnitude equal to it's speed
@@ -41,8 +42,10 @@ namespace Func
     }
 
 
-    // objects with zero velocity do nothing when updating
-    void zeroVelocityFunc(Object::GameObject *t) {}
+    // adds object's acceleration to their velocity
+    void defaultVelocityFunc(Object::GameObject *o) {
+        o->velocity = o->velocity + (o->acceleration * deltaTime);
+    }
 
 
     // position functions
@@ -61,9 +64,8 @@ namespace Func
     // moves the base of the falling tree to remain in place as the tree gets rotated
     void fallingTreePositionFunc(Object::GameObject *t)
     {
-        // when hp is <= 0, the time has passed
-        if (t->hp <= 0.0f) {
-            // remove the object
+        // when the timer reaches 0, destroy the object
+        if (t->timer <= 0.0f) {
             Object::Destroy(t);
         }
     }
@@ -131,9 +133,8 @@ namespace Func
 
         // find the displacement in x and y of the bottom left of the image to the base of the tree once rotated
 
-        // the object is spawned with 1.0 hp, which is decremented with time,
-        // use the object's hp as the interpolator
-        float interp = 1.0 - t->hp;
+        // timer is initialised to 1.0f, use it as an interpolator
+        float interp = 1.0 - (t->timer/1.0f);
 
 
         /*
@@ -144,14 +145,21 @@ namespace Func
 
             it's unfortunate this uses TWO trig functions evrery frame... if someone could figure out how to do this with 
             vector arithmetic that would be so cool B)
+
+            *this doesn't fix the fact that trig functions are used, but recall that 
+            sin(theta) = sqrt(1 - cos(theta)), which can be used to avoid calculating ONE trig function
         */
 
 
         // alpha = angle in degrees (for actual rotation), 
         // theta = angle in radians (for calculations). r = height of the tree
         float alpha = -100.0f * interp, theta = (PI*0.5555556f) * interp, r = t->size.y;
-        // distance the corner of the object is from its original position
-        float dx = r*sinf(theta), dy = r*(1-cosf(theta));
+
+        // recall that sin = sqrt(1 - cos^2)
+        float cosTheta = cosf(theta), sinTheta = sqrt(1.0f - cosTheta*cosTheta);
+
+        // distance the corner of the object is from its original position (dx, dy)
+        float dx = r*sinTheta, dy = r*(1-cosTheta);
 
         // adjust the area the brush is being drawn along the x axis, since otherwise the image would rotate OUT of the drawing
         // rectangle. This isn't necesary along the y axis, though. just add the y displacement to the tranform matrix
@@ -161,7 +169,7 @@ namespace Func
         // rotate the image to mimic the tree falling
         brush->RotateTransform(alpha);
 
-        t->hp -= deltaTime; // decrease the object's hp
+        t->timer -= deltaTime; // decrease the object's hp
 
         return brush;
     }

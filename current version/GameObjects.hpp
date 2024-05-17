@@ -47,7 +47,10 @@ namespace Object
     {
         Player, // 0
         Wolf,    // 1
-        Falling_Tree // 2
+        Falling_Tree, // 2
+
+        // item stack entities
+        Log_Item, // 3
     };
 
     // object to store images for game object animation
@@ -100,10 +103,16 @@ namespace Object
         Animations animations; // images used for animating
         Gdiplus::TextureBrush* brush; // if the entity has no animations, this constant brush is used for drawing
         
+
+        // for managing associated entities
+        GameObject* owner = nullptr;
+        std::vector<GameObject*> ownedObjects; 
+
         
-        float hp; // object's health
+        int hp, maxHP; // object's health/health cap
         float speed; // scalar movement speed
         int idx; // index of the object in the gameObjects vector
+        float timer; // for obects with mechanics dependent on time
 
 
         bool hasCollision;
@@ -116,7 +125,7 @@ namespace Object
 
         // constructor
         GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
-            EntityType Type, Math::Point2 Size, float Speed, float Hp);
+            EntityType Type, Math::Point2 Size, float Speed, int Hp);
 
 
         // calls the behaviour functions, updating member variables
@@ -150,11 +159,11 @@ namespace Object
         // choses one image from the animations object that will be drawn to the screen
         Gdiplus::TextureBrush* (*animationScript)(GameObject*, Math::Point2*);
         
-        bool hasAnimation = true; 
-        
-        Math::Point2 brushScale; // sclae for image drawing purposes
+        Gdiplus::Matrix *brushScaleMatrix; // scale for image drawing purposes
         Math::Point2 srcDimensions; // dimensions (in pixels) of the image file
     };
+
+
 
     // finds the cell coordinates of a position in world space
     Math::Point2 findCell(Math::Vector2 pos);

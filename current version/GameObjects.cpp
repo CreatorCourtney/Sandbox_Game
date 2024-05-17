@@ -30,7 +30,7 @@ namespace Object
 
     // constructor for GameObject
     GameObject::GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
-    EntityType Type, Math::Point2 Size, float Speed, float Hp)
+    EntityType Type, Math::Point2 Size, float Speed, int Hp)
     : pos(Pos), velocity(Velocity), type(Type), size(Size), speed(Speed), hp(Hp) 
     {
         // index is the size of the gameObjects vector, which gets incremented after the creation of this
@@ -50,6 +50,7 @@ namespace Object
                 hasCollision = true;
                 radius = Math::Max(size.x/2, size.y/2);
                 centrePos = pos + Math::Vector2(size.x/2, size.y/2);
+                maxHP = 5;
                 
                 // behaviour functions
                 velocityFunc = Func::playerVelocityFunc;
@@ -72,10 +73,10 @@ namespace Object
                 animationScript = Func::noAnimation;
 
                 // attributes
-                hasAnimation = false;
                 hasCollision = true;
                 radius = Math::Max(size.x/2, size.y/2);
                 centrePos = pos + Math::Vector2(size.x/2, size.y/2);
+                maxHP = 3;
                 
                 // behaviour functions
                 velocityFunc = Func::wolfVelocityFunc;
@@ -96,21 +97,45 @@ namespace Object
                 // attributes
                 hasCollision = false;
                 centrePos = pos;
+                timer = 1.0f; // amount of time it will exist
+                maxHP = 1;
 
                 // behaviour functions
-                velocityFunc = Func::zeroVelocityFunc;
+                velocityFunc = Func::defaultVelocityFunc;
                 positionFunc = Func::fallingTreePositionFunc;
                 collisionFunc = Collisions::defaultCollisionFunction;
 
                 // misc
                 cell = Math::Point2((pos.x/sideLen)+1, (pos.y/sideLen)+9);
                 break;
+
+            case Log_Item:
+                // assgign texture variables
+                srcDimensions = {50, 50};
+                brush = logBrush;
+                // animation script
+                animationScript = Func::noAnimation;
+
+                // attributes
+                centrePos = pos + Math::Vector2(size.x/2, size.y/2);
+                maxHP = 15; // up to 15 logs can stack together
+                hasCollision = true;
+                radius = Math::Max(size.x/2, size.y/2);
+
+                // behaviour functions
+                velocityFunc = Func::defaultVelocityFunc;
+                positionFunc = Func::defaultPositionFunc;
+                collisionFunc = Collisions::stationaryItemCollisionFunction;
+
+                // misc
+                cell = findCell(centrePos);
+                break;
         }
 
         // brush mult, for drawing the entity's texture to scale
         float   scaleX = (float)size.x/(float)srcDimensions.x, 
                 scaleY = (float)size.y/(float)srcDimensions.y;
-        brushScale = Math::Point2(scaleX, scaleY);
+        brushScaleMatrix = new Gdiplus::Matrix(scaleX, 0.0f, 0.0f, scaleY, 0.0f, 0.0f);
 
         
         // assigning the number of cells, and space between collision points
@@ -122,22 +147,20 @@ namespace Object
 
 
         // preemptively set the brushes so that they don't wrap, thus drawing the image only once
-        if (hasAnimation) {
-            for (int i = 0; i < animations.front.size(); i++) {
-                animations.front[i]->SetWrapMode(Gdiplus::WrapModeClamp);
-            }
-            for (int i = 0; i < animations.back.size(); i++) {
-                animations.back[i]->SetWrapMode(Gdiplus::WrapModeClamp);
-            }
-            for (int i = 0; i < animations.left.size(); i++) {
-                animations.left[i]->SetWrapMode(Gdiplus::WrapModeClamp);
-            }
-            for (int i = 0; i < animations.right.size(); i++) {
-                animations.right[i]->SetWrapMode(Gdiplus::WrapModeClamp);
-            }
-        } else {
-            brush->SetWrapMode(Gdiplus::WrapModeClamp);
+        for (int i = 0; i < animations.front.size(); i++) {
+            animations.front[i]->SetWrapMode(Gdiplus::WrapModeClamp);
         }
+        for (int i = 0; i < animations.back.size(); i++) {
+            animations.back[i]->SetWrapMode(Gdiplus::WrapModeClamp);
+        }
+        for (int i = 0; i < animations.left.size(); i++) {
+            animations.left[i]->SetWrapMode(Gdiplus::WrapModeClamp);
+        }
+        for (int i = 0; i < animations.right.size(); i++) {
+            animations.right[i]->SetWrapMode(Gdiplus::WrapModeClamp);
+        }
+        if (brush->GetLastStatus() == Gdiplus::Ok) 
+            brush->SetWrapMode(Gdiplus::WrapModeClamp);
     }
 
     // draws the object to the graphics object
@@ -164,6 +187,12 @@ namespace Object
     {
         if (gameIsPaused) return; // do nothing when the game is paused
 
+        // kill objects with 0 health
+        if (hp <= 0) {
+            Destroy(this);
+            return;
+        } else hp = Math::Min(hp, maxHP);
+
         velocityFunc(this); // update velocity
         positionFunc(this); // update position
         collisionFunc(this); // handle collisions
@@ -187,6 +216,9 @@ namespace Object
 
         // bkgState is used in other functions to determine where the camer is
         bkgState = bottom|top|right|left;
+
+        // find the real position of the mouse in world space
+        mousePosREAL = getWorldPosition(mousePos);
     }
 
 
@@ -296,8 +328,9 @@ namespace Object
     // prepares a texturebrush to be drawn to the screen by setting the matrix displacement and scale
     void GameObject::setBrushMatrix(Gdiplus::TextureBrush *b, Math::Point2 disp)
     {
-        Gdiplus::Matrix matrix(brushScale.x, 0.0f, 0.0f, brushScale.y, disp.x, disp.y);
+        Gdiplus::Matrix matrix(1.0f, 0.0f, 0.0f, 1.0f, disp.x, disp.y);
         b->SetTransform(&matrix);
+        b->MultiplyTransform(brushScaleMatrix);
     }
 
 

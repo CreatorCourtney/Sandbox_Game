@@ -27,6 +27,12 @@ namespace Globals {
     int prevFPS = 0;
     bool gameIsPaused = 0;
 
+
+    // the position of the player's mouse on the screen
+    Math::Point2 mousePos(0, 0); 
+    // relative position of the player's mouse in the world
+    Math::Vector2 mousePosREAL(0.0f, 0.0f);
+
     unsigned char debuggingTools = 4; // . . . . . hitboxes, speed, showInfo
     unsigned char inputKeys = 0; // 000Swasd
     unsigned char bkgState = 0b00000000;

@@ -7,7 +7,6 @@
 
 #include "Globals.hpp"
 #include "GameObjects.hpp"
-#include "Inventory.hpp"
 #include "PlayerInput.hpp"
 
 namespace Frame 

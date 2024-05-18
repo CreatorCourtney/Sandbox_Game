@@ -29,9 +29,8 @@ namespace Object
 
 
     // constructor for GameObject
-    GameObject::GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
-    EntityType Type, Math::Point2 Size, float Speed, int Hp)
-    : pos(Pos), velocity(Velocity), type(Type), size(Size), speed(Speed), hp(Hp) 
+    GameObject::GameObject(Math::Vector2 Pos, Math::Vector2 Velocity, EntityType Type, int Hp)
+    : pos(Pos), velocity(Velocity), type(Type), hp(Hp) 
     {
         // index is the size of the gameObjects vector, which gets incremented after the creation of this
         idx = gameObjects.size();
@@ -42,6 +41,7 @@ namespace Object
                 // assign texture variables
                 animations = playerAnimations;
                 srcDimensions = {25, 25};
+                size = Math::Point2(50*g_scale, 50*g_scale);
                 // animation script
                 animationScript = Func::playerAnimationScript;
 
@@ -51,6 +51,7 @@ namespace Object
                 radius = Math::Max(size.x/2, size.y/2);
                 centrePos = pos + Math::Vector2(size.x/2, size.y/2);
                 maxHP = 5;
+                speed = 100.0f*g_scale;
                 
                 // behaviour functions
                 velocityFunc = Func::playerVelocityFunc;
@@ -58,10 +59,14 @@ namespace Object
                 collisionFunc = Collisions::defaultCollisionFunction;
 
                 // misc
+
                 // cell size is relative to the size of the player's hitbox
                 // but add 2 so they can more easily walk through 1 wide gaps
                 sideLen = Math::maxf(size.x, size.y)+2.0f;
                 SetGrid(); // map created relative to the size of the player
+
+                // set the interaction radius
+                interactRange = interactRangeCells * sideLen;
                 cell = findCell(centrePos);
                 break;
 
@@ -69,6 +74,7 @@ namespace Object
                 // assign texture variables
                 brush = wolfBrush;
                 srcDimensions = {50, 50};
+                size = Math::Point2(75*g_scale, 75*g_scale);
                 // animation script
                 animationScript = Func::noAnimation;
 
@@ -77,6 +83,7 @@ namespace Object
                 radius = Math::Max(size.x/2, size.y/2);
                 centrePos = pos + Math::Vector2(size.x/2, size.y/2);
                 maxHP = 3;
+                speed = 80.0f*g_scale;
                 
                 // behaviour functions
                 velocityFunc = Func::wolfVelocityFunc;
@@ -91,6 +98,7 @@ namespace Object
                 // assign texture variables
                 srcDimensions = {250, 250};
                 brush = falling_treeBrush;
+                size = Math::Point2(10*sideLen, 10*sideLen);
                 // animation script
                 animationScript = Func::treeFallingAnimations;
 
@@ -99,6 +107,7 @@ namespace Object
                 centrePos = pos;
                 timer = 1.0f; // amount of time it will exist
                 maxHP = 1;
+                speed = 0.0f;
 
                 // behaviour functions
                 velocityFunc = Func::defaultVelocityFunc;
@@ -113,6 +122,7 @@ namespace Object
                 // assgign texture variables
                 srcDimensions = {50, 50};
                 brush = logBrush;
+                size = Math::Point2(40*g_scale, 40*g_scale);
                 // animation script
                 animationScript = Func::noAnimation;
 
@@ -121,10 +131,12 @@ namespace Object
                 maxHP = 15; // up to 15 logs can stack together
                 hasCollision = true;
                 radius = Math::Max(size.x/2, size.y/2);
+                // items use speed as a way to scale their damage when thrown
+                speed = 1.0f;
 
                 // behaviour functions
                 velocityFunc = Func::defaultVelocityFunc;
-                positionFunc = Func::defaultPositionFunc;
+                positionFunc = Func::thrownItemPositionFunc;
                 collisionFunc = Collisions::stationaryItemCollisionFunction;
 
                 // misc
@@ -336,13 +348,16 @@ namespace Object
 
 
 
-    // for instantiating game objects
-    void Instantiate(EntityType type, Math::Vector2 pos, Math::Point2 size, float speed, float hp)
+    // for instantiating game objects. returns a reference to the object created
+    GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp)
     {
         // create the object 
-        GameObject *obj = new GameObject(pos, Math::Vector2(0.0f, 0.0f), type, size, speed, hp);
+        GameObject *obj = new GameObject(pos, Math::Vector2(0.0f, 0.0f), type, hp);
         // add it to the game objects vector
         gameObjects.push_back(obj);
+
+        // return the reference to the game object just created
+        return obj;
     }
 
     // deltes the specified object
@@ -356,7 +371,69 @@ namespace Object
         // erase the object's entry in the global vector
         gameObjects.erase(gameObjects.begin()+n);
 
-        // deallocate the object's resources, to avoid memory leaks
-        delete obj;
+        // remove itself from the owner's owned objects
+        if (obj->owner != nullptr)
+        {
+            // if the player is holding obj, stop that
+            if (obj->owner == player) {
+                heldObject = nullptr;
+                buildingType = -1;
+            }
+            // look through the owned objects vector
+            int n = obj->owner->ownedObjects.size();
+            for (int i = 0; i < n; i++) {
+                // object found
+                if (obj->owner->ownedObjects[i] == obj) {
+                    // remove the object from the vector
+                    obj->owner->ownedObjects.erase(obj->owner->ownedObjects.begin()+i);
+                    // exit the loop
+                    break;
+                }
+            }
+        }
+
+        // cleanup object's resources
+        obj->deallocateResources();
+    }
+
+    // cleanup function
+    void GameObject::deallocateResources()
+    {
+        // currently, all of the images used for drawing are stored in global
+        // variables which wil be reused by other iterations of the object. don't delete
+        // these until the application closes, as other objects will need to
+        // use these resources
+
+        // free the matrix for brush scaling
+        delete brushScaleMatrix;
+
+        // free the object pointer itself
+        free(this);
+    }
+
+    // spawns an item stack with random velocity. return a reference to the item created
+    GameObject* spawnItemStack(EntityType type, Math::Vector2 pos, int count)
+    {
+        if (type<Log_Item) return nullptr; // not an item, don't do anything
+
+        // generate a vector with two random integers
+        // rand() returns a value in the range [0, RAND_MAX)
+        // to include both positive and negative numbers, subtract RAND_MAX/2
+        // from rand(), so there's a 50% chance of being negative
+        int num = RAND_MAX/2;
+        Math::Vector2 dir(rand()-num, rand()-num);
+
+        // normalise the vector to get a unit vector direction
+        dir.normalise();
+
+        // create an item object, and save the reference to it
+        GameObject* obj = Instantiate(type, pos, count);
+
+        // set the object's velocity and acceleration
+        obj->velocity = dir * 20.0f;
+        obj->acceleration = dir * -20.0f;
+
+        // return a reference to the item stack created
+        return obj;
     }
 }

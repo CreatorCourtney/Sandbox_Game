@@ -276,10 +276,13 @@ void Object::GameObject::DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Ma
 
         // draw arrow in direction of velocity
         Math::Vector2 centrePosVec(centreScreenPos.x, centreScreenPos.y);
-        Math::Vector2 p = centrePosVec + velocity/2.5f;
+        Math::Vector2 p = centrePosVec + velocity*0.4f;
         graphics.DrawLine(&pen2, Gdiplus::Point(centreScreenPos.x, centreScreenPos.y), Gdiplus::Point(p.x, p.y));
         
-        
+        // draw arrow in direction of acceleration
+        p = centrePosVec + acceleration*0.4f;
+        graphics.DrawLine(&pen3, Gdiplus::Point(centreScreenPos.x, centreScreenPos.y), Gdiplus::Point(p.x, p.y));
+
         // for visualising collision algorithms
         if (!hasCollision) return;
         // green circle represents collision radius for game objects
@@ -310,5 +313,4 @@ void Object::GameObject::DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Ma
                 x = screenPos.x+size.x-d;
             graphics.FillEllipse(&redBrush, x, y, dotSize, dotSize);
         }
-
     }

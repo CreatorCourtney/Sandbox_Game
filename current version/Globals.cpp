@@ -80,16 +80,6 @@ namespace Globals {
             }
             playerAnimations = Object::Animations(front, back, left, right, Ft, Bt, Lt, Rt);
         }
-
-        // hotbar images
-        {
-            hotbarButtons[0] = new Inventory::HotbarSlot(Gdiplus::Rect(10, 25,100,100), LOG, 20);
-            hotbarButtons[1] = new Inventory::HotbarSlot(Gdiplus::Rect(120,25,100,100), BRIDGE, 20);
-            hotbarButtons[2] = new Inventory::HotbarSlot(Gdiplus::Rect(230,25,100,100), 0, 20);
-            hotbarButtons[3] = new Inventory::HotbarSlot(Gdiplus::Rect(340,25,100,100), 0, 20);
-            hotbarButtons[4] = new Inventory::HotbarSlot(Gdiplus::Rect(450,25,100,100), 0, 20);
-            hotbarButtons[5] = new Inventory::HotbarSlot(Gdiplus::Rect(560,58, 30, 67), 0, 20);
-        }
         
         return 0;
     }

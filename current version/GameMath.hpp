@@ -54,6 +54,8 @@ namespace Math
     int Min(int a, int b); // min for ints
     float absf(float a); // abs for floats
     float clampf(float min, float max, float x); // clamps x between 2 values, for floats
+
+    
 }
 
 #endif

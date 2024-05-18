@@ -124,8 +124,7 @@ namespace Object
 
 
         // constructor
-        GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
-            EntityType Type, Math::Point2 Size, float Speed, int Hp);
+        GameObject(Math::Vector2 Pos, Math::Vector2 Velocity, EntityType Type, int Hp);
 
 
         // calls the behaviour functions, updating member variables
@@ -140,13 +139,18 @@ namespace Object
         void setBrushMatrix(Gdiplus::TextureBrush *b, Math::Point2 disp);
 
 
-    private:
         // what should happen when updating the entity's velocity
         void (*velocityFunc)(GameObject*);
         // what should happen when updating the entity's position
         void (*positionFunc)(GameObject*);
         // collision behaviour
         void (*collisionFunc)(GameObject*);
+
+
+        // cleanup function
+        void deallocateResources();
+
+    private:
         
         // developer tool, draws the collision boundaries for the game object
         void DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Math::Point2 screenPos);
@@ -175,12 +179,15 @@ namespace Object
 
 
 
-    // for instantiating game objects
-    void Instantiate(EntityType type, Math::Vector2 pos, Math::Point2 size,
-        float speed, float hp);
+    // for instantiating game objects. returns a reference to the object created
+    GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp);
 
     // deletes the specified object
     void Destroy(GameObject * obj);
+
+    
+    // spawns an item stack with random velocity. return a reference to the item created
+    GameObject* spawnItemStack(EntityType type, Math::Vector2 pos, int count);
 }
 
 #endif

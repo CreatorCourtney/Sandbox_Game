@@ -9,28 +9,22 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
     Frame::InitialiseFrameCreation();
 
     // instantiate the player
-    Object::Instantiate(Object::Player, Math::Vector2(400.0f, 200.0f),
-        Math::Point2(50*g_scale, 50*g_scale),
-        100.0f*g_scale, 5.0f);
+    Object::Instantiate(Object::Player, Math::Vector2(400.0f, 200.0f), 5);
     player = gameObjects[0];
+
 
     // spawn wolves for testing
     for (int i = 0; i < 0; i++) {
-        Object::Instantiate(Object::Wolf, Math::Vector2(500.0f, 300.0f), 
-            Math::Point2(50*g_scale, 50*g_scale), 
-            80.0f*g_scale, 3);
+        Object::Instantiate(Object::Wolf, Math::Vector2(500.0f, 300.0f), 3);
     }
 
     // spawn items for testing
-    Object::Instantiate(Object::Log_Item, Math::Vector2(700.0f, 300.0f),
-        Math::Point2(40*g_scale, 40*g_scale),
-        0.0f, 13);
+    Object::Instantiate(Object::Log_Item, Math::Vector2(700.0f, 300.0f), 13);
 
-    Object::Instantiate(Object::Log_Item, Math::Vector2(500.0f, 300.0f),
-        Math::Point2(40*g_scale, 40*g_scale),
-        0.0f, 2);
+    Object::Instantiate(Object::Log_Item, Math::Vector2(500.0f, 300.0f), 2);
 
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
+
 
     // register the window class
     const wchar_t CLASS_NAME[] = L"Window Class";
@@ -126,6 +120,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         case WM_KEYDOWN:
+            // enable bits
             switch (wParam)
             {
                 case 0x57: // w
@@ -153,9 +148,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     break;
                 case VK_F6:
                     debuggingTools ^= 4; break;
-            } break;
+            } 
+            break;
 
         case WM_KEYUP:
+            // disable bits
             switch (wParam)
             {
                 case 0x57: // w
@@ -168,68 +165,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     inputKeys &= ~1; break;
                 case VK_SHIFT:
                     inputKeys &= ~16; break;
-            } break;
+            } 
+            break;
 
         case WM_LBUTTONDOWN: {
             if (gameIsPaused) break;
+            
             int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
-
-            switch (Inventory::buttonPress(x, y))
-            {
-                case 0: {// clicked somewhere on the map
-                    // check all the items to see if you clicked on one
-                    
-
-
-                    Math::Vector2 worldPos = Object::getWorldPosition(Math::Point2(x,y));
-                    Math::Point2 cell = Object::findCell(worldPos);
-                    Input::PlaceObjectInCell(cell, selectedObj);
-                    break;
-                }
-                case HOTBAR_1:
-                    selectedObj = LOG; break;
-                case HOTBAR_2:
-                    selectedObj = BRIDGE; break;
-                case HOTBAR_3:
-                    std::cout << "slot 3\n"; break;
-                case HOTBAR_4:
-                    std::cout << "slot 4\n"; break;
-                case HOTBAR_5:
-                    std::cout << "slot 5\n"; break;
-                case INVENTORY_BUTTON:
-                    std::cout << "inventory\n"; break;
-                default:
-                    std::cout << "UI panel click\n"; break;
-            } break;
+            Input::leftClickFunc(x, y);
+            
+            break;
         }
 
         case WM_RBUTTONDOWN: {
             if (gameIsPaused) break;
-            int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
 
-            switch (Inventory::buttonPress(x, y))
-            {
-                case 0: {// clicked somewhere on the map
-                    Math::Vector2 worldPos = Object::getWorldPosition(Math::Point2(x,y));
-                    Math::Point2 cell = Object::findCell(worldPos);
-                    Input::PlaceObjectInCell(cell, EMPTY);
-                    break;
-                }
-                case HOTBAR_1:
-                    std::cout << "slot 1\n"; break;
-                case HOTBAR_2:
-                    std::cout << "slot 2\n"; break;
-                case HOTBAR_3:
-                    std::cout << "slot 3\n"; break;
-                case HOTBAR_4:
-                    std::cout << "slot 4\n"; break;
-                case HOTBAR_5:
-                    std::cout << "slot 5\n"; break;
-                case INVENTORY_BUTTON:
-                    std::cout << "inventory\n"; break;
-                default:
-                    std::cout << "UI panel click\n"; break;
-            } break;
+            int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
+            Input::rightClickFunc(x, y);
+
+            break;
         }
 
         case WM_MOUSEMOVE: {

@@ -10,7 +10,6 @@
 
 #include "GameMath.hpp"
 #include "GameObjects.hpp"
-#include "Inventory.hpp"
 // had to include here to avoid compiler issues, NOT included in GameObjects.hpp
 #include "EntityFunctions.hpp"
 #include "Collisions.hpp"
@@ -26,6 +25,9 @@ namespace Globals {
     float deltaTime = 0.0f;
     int prevFPS = 0;
     bool gameIsPaused = 0;
+
+    int interactRangeCells = 3; // player can only interact with things within X cells
+    float interactRange = 0.0f; // actual interaction distance
 
 
     // the position of the player's mouse on the screen
@@ -63,16 +65,21 @@ namespace Globals {
     *wolfBrush, *falling_treeBrush, *stumpBrush;
 
     Object::Animations playerAnimations;
-    
-    Inventory::HotbarSlot * hotbarButtons[6];
 
     Math::Vector2 wndScale;
     float UIScale = 1.0f, currUIScale;
 
+
     Object::GameObject * player;
+    // object the player is holding
+    Object::GameObject * heldObject = nullptr;
+    // type of object player tries to put in a cell
+    int buildingType = EMPTY;
+
+
     std::vector<Object::GameObject*> gameObjects;
     int numObjectsinOverlay = 0;
-    CellObject selectedObj = LOG;
+
 
     Gdiplus::Bitmap * createEmptyBitmap(int width, int height);
 

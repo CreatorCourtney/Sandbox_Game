@@ -66,9 +66,67 @@ namespace Func
     {
         // when the timer reaches 0, destroy the object
         if (t->timer <= 0.0f) {
+
+            // once the tree is gone, spawn some log items in where it fell
+            // the further log will be the height of the tree (size.x) to the LEFT of pos,
+            // the nearest one could be at pos
+
+            int n = 5; // the number of logs to be spawned
+            // step between each item object, and the y position of each object
+            float step = t->size.x / n, y = t->pos.y + t->size.y;
+
+            // spawn n log items
+            for (int i = 1; i <= n; i++)
+            {
+                Math::Vector2 pos(t->pos.x - step*i, y);
+                Object::spawnItemStack(Object::Log_Item, pos, 1);
+            }
+
+            // destroy the falling tree object
             Object::Destroy(t);
         }
     }
+
+
+    // holds the item stack a constant distance away from the player's centre
+    void heldItemPositionFunc(Object::GameObject *item)
+    {
+        // get a unit vector from the player's centre to the mouse position's centre
+        Math::Vector2 dir = Math::getUnitVector(player->centrePos, mousePosREAL);
+
+        // place the item a fixed distance from the player's centre, in the direction of the mouse
+        float r = player->radius + item->radius + 5.0f;
+        item->centrePos = player->centrePos + (dir * r);
+
+        // update the 'pos' member
+        item->pos = item->centrePos - Math::Vector2(item->size.x/2, item->size.y/2);
+    }
+
+    // adds velocity to the position. when the velocity reaches zero, set acceleration to zero.
+    void thrownItemPositionFunc(Object::GameObject *item)
+    {
+        // velocity is the derivative of position; add velocity to the current position every frame
+        // multiply the velocity by deltaTime, first, to normalise the movement speed
+        item->pos = item->pos + (item->velocity * deltaTime);
+        // update the centre position, which is in the centre of the object's hitbox
+        item->centrePos = item->pos + Math::Vector2(item->size.x/2, item->size.y/2);
+
+        // when one component of the velocity is zero, set that accelaration component to zero
+        // to account for floating point imprecision, only do this if it's close enough to zero
+        if (Math::absf(item->velocity.x) <= 5.0f) {
+            item->velocity.x = item->acceleration.x = 0.0f;
+        }
+        if (Math::absf(item->velocity.y) <= 5.0f) {
+            item->velocity.y = item->acceleration.y = 0.0f;
+        }
+
+        // once the velocity reaches zero, set the item's pos function back to default, 
+        // to avoid doing these checks every frame
+        if (item->velocity == Math::Zero2)
+            item->positionFunc = defaultPositionFunc;
+    }
+
+
 
 
 
@@ -163,6 +221,10 @@ namespace Func
 
         // adjust the area the brush is being drawn along the x axis, since otherwise the image would rotate OUT of the drawing
         // rectangle. This isn't necesary along the y axis, though. just add the y displacement to the tranform matrix
+
+        // brush->SetWrapMode(Gdiplus::WrapModeTile);
+        // t->setBrushMatrix(brush, Math::Point2(screenPos->x, screenPos->y+t->size.y));
+
         screenPos->x -= dx;
         t->setBrushMatrix(brush, Math::Point2(screenPos->x, screenPos->y+dy));
 

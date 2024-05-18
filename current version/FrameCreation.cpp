@@ -33,8 +33,6 @@ namespace Frame
         
         graphics.FillRectangle(overlayBrush, 0, 0, wndWidth, wndHeight);
 
-        Inventory::drawHotbar(graphics);
-
         if (gameIsPaused) {
             Gdiplus::SolidBrush pauseBrush(Gdiplus::Color(180,0,0,0));
             Gdiplus::Rect rect(0,0,wndWidth,wndHeight);

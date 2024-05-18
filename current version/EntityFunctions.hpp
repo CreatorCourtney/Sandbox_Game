@@ -23,6 +23,11 @@ namespace Func {
     // trees don't move, snap their position to the position they spawned
     void fallingTreePositionFunc(Object::GameObject *t);
 
+    // holds the item stack a constant distance away from the player's centre
+    void heldItemPositionFunc(Object::GameObject *item);
+    // adds velocity to the position. when the velocity reaches zero, set acceleration to zero.
+    void thrownItemPositionFunc(Object::GameObject *item);
+
 
     // animation scripts
 
@@ -34,6 +39,7 @@ namespace Func {
 
     // just returns the object's brush member. for objects with no animation
     Gdiplus::TextureBrush * noAnimation(Object::GameObject *o, Math::Point2 *screenPos);
+
 }
 
 #endif

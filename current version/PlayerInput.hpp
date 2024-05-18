@@ -18,6 +18,11 @@ namespace Input
     void leftClickFunc(int x, int y);
     // if the player IS holding an item, attempt to place it, otherwise, do nothing (for now c:)
     void rightClickFunc(int x, int y);
+
+    // sets the selected object to be held by the player
+    void setHeldObject(Object::GameObject *obj);
+    // throw the object the player is currently holding
+    void throwHeldObject();
 }
 
 #endif

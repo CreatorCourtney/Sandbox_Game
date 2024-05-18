@@ -127,8 +127,11 @@ namespace Input
         // draw the object placed onto the image bitmap
         if (img != nullptr) Frame::DrawImageToBitmap(background, img, x, y);
 
-        // update the background brush, so that the change is obervable
+        // update the background brush, so that the change is observable
         if (updateBkgBrush) {
+            // clean up the old brush
+            delete bkgBrush;
+
             // create a new brush
             bkgBrush = new Gdiplus::TextureBrush(background);
             // set the wrap mode to only draw the background once
@@ -183,76 +186,17 @@ namespace Input
                 // entity was clicked
                 if (isInRegion(mousePosREAL, rect))
                 {
-                    Object::EntityType type = obj->type;
+                    // make the player pick up the object, if possible
+                    setHeldObject(obj);
 
-                    // entity is an item stack
-                    if (obj->type >= Object::Log_Item)
-                    {
-                        // reset any existing velocity/acceleration
-                        obj->velocity = obj->acceleration = Math::Zero2;
-
-                        // update the behaviour functions, so that the stack will be held by the player
-                        obj->positionFunc = Func::heldItemPositionFunc;
-
-                        // update the global held object
-                        heldObject = obj;
-
-                        // make the player the object's owner
-                        obj->owner = player;
-                        player->ownedObjects.push_back(obj);
-
-
-                        // update the building type the player tries to place
-                        switch (type)
-                        {
-                            case Object::Log_Item:
-                                // player is building with logs
-                                buildingType = LOG;
-                                break;
-                        }
-
-                        // exit the function, the item was picked up
-                        return;
-                    }
+                    // exit the function, the entity was clicked
+                    return;
                 }
             }
-        } else { // if an item IS held, throw it :)
-        
-            // release the held object
-            Object::GameObject *obj = heldObject;
-            heldObject = nullptr;
 
-            // initiate the velocity in the direction of the mouse
-            Math::Vector2 dir = Math::getUnitVector(obj->centrePos, mousePosREAL);
-            // add player's velocity, so you can actually throw faster 
-            // when throwing in your direction of motion
-            obj->velocity = player->velocity + (dir*100.0f);
-
-            // set the acceleration, so it will eventually stop
-            // set proportionally to the object's velocity
-            obj->acceleration = obj->velocity * -0.7f;
-
-            // set the position function back to normal
-            obj->positionFunc = Func::thrownItemPositionFunc;
-
-
-            // remove obj from the player's owned objects
-            // look through the owned objects vector
-            int n = obj->owner->ownedObjects.size();
-            for (int i = 0; i < n; i++) {
-                // object found
-                if (obj->owner->ownedObjects[i] == obj) {
-                    // remove the object from the vector
-                    obj->owner->ownedObjects.erase(obj->owner->ownedObjects.begin()+i);
-                    // exit the loop
-                    break;
-                }
-            }
-            // remove the player as the objec't owner
-            obj->owner = nullptr;
-            
-            // player can no longer build anything, set the building type back to EMPTY
-            buildingType = EMPTY;
+        } else { 
+            // if an item IS held, throw it :)
+            throwHeldObject();
         }
     }
 
@@ -276,5 +220,75 @@ namespace Input
 
         // upon successful placement, decrease the held item's hp
         if (status == 0 && heldObject != nullptr) heldObject->hp--;
+    }
+
+
+    // sets the selected object to be held by the player
+    void setHeldObject(Object::GameObject *obj)
+    {
+        // update the building type the player tries to place
+        switch (obj->type)
+        {
+            case Object::Log_Item:
+                // player is building with logs
+                buildingType = LOG;
+                break;
+
+            default: return; // not an item, cannot be held
+        }
+
+        // reset any existing velocity/acceleration
+        obj->velocity = obj->acceleration = Math::Zero2;
+
+        // update the behaviour functions, so that the stack will be held by the player
+        obj->positionFunc = Func::heldItemPositionFunc;
+
+        // update the global held object
+        heldObject = obj;
+
+        // make the player the object's owner
+        obj->owner = player;
+        player->ownedObjects.push_back(obj);
+    }
+
+    // throw the object the player is currently holding
+    void throwHeldObject()
+    {
+        // release the held object
+        Object::GameObject *obj = heldObject;
+        heldObject = nullptr;
+
+        // initiate the velocity in the direction of the mouse
+        Math::Vector2 dir = Math::getUnitVector(obj->centrePos, mousePosREAL);
+        // add player's velocity, so you can actually throw faster 
+        // when throwing in your direction of motion
+        obj->velocity = player->velocity + (dir*100.0f);
+
+        // set the acceleration, so it will eventually stop
+        // set proportionally to the object's velocity
+        obj->acceleration = obj->velocity * -0.7f;
+
+        // set the position function back to normal
+        obj->positionFunc = Func::thrownItemPositionFunc;
+
+
+        // remove obj from the player's owned objects
+        // look through the owned objects vector
+        int n = obj->owner->ownedObjects.size();
+        for (int i = 0; i < n; i++) {
+            // object found
+            if (obj->owner->ownedObjects[i] == obj) {
+                // remove the object from the vector
+                obj->owner->ownedObjects.erase(obj->owner->ownedObjects.begin()+i);
+                // exit the loop
+                break;
+            }
+        }
+        
+        // remove the player as the objec't owner
+        obj->owner = nullptr;
+
+        // player can no longer build anything, set the building type back to EMPTY
+        buildingType = EMPTY;
     }
 }

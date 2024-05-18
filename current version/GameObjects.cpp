@@ -375,10 +375,11 @@ namespace Object
         if (obj->owner != nullptr)
         {
             // if the player is holding obj, stop that
-            if (obj->owner == player) {
+            if (obj->owner == player || obj == heldObject) {
                 heldObject = nullptr;
-                buildingType = -1;
+                buildingType = EMPTY;
             }
+
             // look through the owned objects vector
             int n = obj->owner->ownedObjects.size();
             for (int i = 0; i < n; i++) {
@@ -407,8 +408,8 @@ namespace Object
         // free the matrix for brush scaling
         delete brushScaleMatrix;
 
-        // free the object pointer itself
-        free(this);
+        // delete the object itself
+        delete this;
     }
 
     // spawns an item stack with random velocity. return a reference to the item created

@@ -370,4 +370,5 @@ namespace Frame
         // cleanup
         delete cellBrush;
     }
+
 }

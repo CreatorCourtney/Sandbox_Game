@@ -15,27 +15,37 @@
 /* BYTE DECOMPOSITION:
 byte 1:
     1-8 = cell info (wall type, etc)
+
 byte 2:
-9-12 = ...
+9-12 = timer, (0-15)
+
 13: water by default?
 14: barrier?
 15: occupied?
-16: indestructible? 
-byte3:
+16: indestructible by player? 
+
+byte 3:
 17-20 = water corner shorelines
     ....LRlr, 0010 = bottom left, 0100 = top right
 21-24 = side shorelines
     lrtb...., 1100 = left&right, 0101 = right&bottom
-*/
-#define EMPTY    0b0000000000000000
-#define BARRIER  0b0010000000000000
-#define OCCUPIED 0b0100000000000000
-#define WATER    0b0001000000000000
 
-#define LOG      0b0110000000000001
-#define BRIDGE   0b0100000000000010
-#define TREE     0b0110000000000011
-#define STUMP    0b0110000000000100
+byte 4:
+25: can be destroyed by enemies
+
+16-32: building HP
+*/
+#define EMPTY           0b00000000000000000000000000000000
+#define BARRIER         0b00000000000000000010000000000000
+#define OCCUPIED        0b00000000000000000100000000000000
+#define WATER           0b00000000000000000001000000000000
+#define DESTRUCTIBLE    0b00000001000000000000000000000000
+
+#define LOG      0b00010001000000000110000000000001 // 8 health
+#define BRIDGE   0b00000111000000000100000000000010 // 3 health
+#define TREE     0b00000000000000000110000000000011 // not destructible
+#define STUMP    0b00010001000000000110000000000100 // 8 health
+#define SAPLING  0b00000101000000000110000000000101 // 2 health
 
 typedef int CellObject;
 
@@ -51,6 +61,7 @@ namespace Object
 
         // item stack entities
         Log_Item, // 3
+        Pine_Cone_Item // 4
     };
 
     // object to store images for game object animation

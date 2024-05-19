@@ -50,6 +50,16 @@ namespace Globals {
         stumpBrush = new Gdiplus::TextureBrush(stumpImg);
         stumpBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
+        Pine_ConeImg = Gdiplus::Image::FromFile(L"images/Tree/Pine_Cone.png");
+        if (Pine_ConeImg->GetLastStatus() != Gdiplus::Ok) return 2;
+        Pine_ConeBrush = new Gdiplus::TextureBrush(Pine_ConeImg);
+        Pine_ConeBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        saplingImg = Gdiplus::Image::FromFile(L"images/Tree/Sapling.png");
+        if (saplingImg->GetLastStatus() != Gdiplus::Ok) return 2;
+        saplingBrush = new Gdiplus::TextureBrush(saplingImg);
+        saplingBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+
         // load player animations
         {
             std::vector<Gdiplus::TextureBrush*> front, back, left, right;
@@ -59,24 +69,32 @@ namespace Globals {
                 Gdiplus::Image * img = Gdiplus::Image::FromFile(txt.c_str());
                 Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
                 front.push_back(brush);
+                // cleanup
+                delete img;
             }
             for (int i = 0; i < 12; i++) {
                 std::wstring txt = L"images/Player/back/" + std::to_wstring(i) + L".png";
                 Gdiplus::Image * img = Gdiplus::Image::FromFile(txt.c_str());
                 Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
                 back.push_back(brush);
+                // cleanup
+                delete img;
             }
             for (int i = 0; i < 12; i++) {
                 std::wstring txt = L"images/Player/right/" + std::to_wstring(i) + L".png";
                 Gdiplus::Image * img = Gdiplus::Image::FromFile(txt.c_str());
                 Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
                 right.push_back(brush);
+                // cleanup
+                delete img;
             }
             for (int i = 0; i < 12; i++) {
                 std::wstring txt = L"images/Player/left/" + std::to_wstring(i) + L".png";
                 Gdiplus::Image * img = Gdiplus::Image::FromFile(txt.c_str());
                 Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
                 left.push_back(brush);
+                // cleanup
+                delete img;
             }
             playerAnimations = Object::Animations(front, back, left, right, Ft, Bt, Lt, Rt);
         }

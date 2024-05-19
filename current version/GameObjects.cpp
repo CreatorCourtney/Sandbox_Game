@@ -142,6 +142,31 @@ namespace Object
                 // misc
                 cell = findCell(centrePos);
                 break;
+
+            case Pine_Cone_Item:
+                // assign texture variables
+                srcDimensions = {25, 25};
+                brush = Pine_ConeBrush;
+                size = Math::Point2(40*g_scale, 40*g_scale);
+                // animation script
+                animationScript = Func::noAnimation;
+
+                // attributes
+                centrePos = pos + Math::Vector2(size.x/2, size.y/2);
+                maxHP = 5; // up to 5 pine cones can stack
+                radius = Math::Max(size.x/2, size.y/2);
+                hasCollision = true;
+                // items use speed as a way to scale their damage when thrown
+                speed = 0.5f;
+
+                // behaviour functions
+                velocityFunc = Func::defaultVelocityFunc;
+                positionFunc = Func::thrownItemPositionFunc;
+                collisionFunc = Collisions::stationaryItemCollisionFunction;
+
+                // misc
+                cell = findCell(centrePos);
+                break;
         }
 
         // brush mult, for drawing the entity's texture to scale
@@ -363,6 +388,9 @@ namespace Object
     // deltes the specified object
     void Destroy(GameObject * obj)
     {
+        // object doesn't exist, don't try to destroy it
+        if (obj == nullptr) return;
+
         int n = obj->idx; // index of the object in the global vector
         // decrement the indices of all following game objects,
         // as the size of the vector will decrease
@@ -381,7 +409,7 @@ namespace Object
             }
 
             // look through the owned objects vector
-            int n = obj->owner->ownedObjects.size();
+            n = obj->owner->ownedObjects.size();
             for (int i = 0; i < n; i++) {
                 // object found
                 if (obj->owner->ownedObjects[i] == obj) {
@@ -390,6 +418,18 @@ namespace Object
                     // exit the loop
                     break;
                 }
+            }
+        }
+
+        // remove itself as the owner of all owned objects
+        n = obj->ownedObjects.size();
+        for (int i = 0; i < n; i++) {
+            GameObject *ownedObj = obj->ownedObjects[i];
+
+            // ensure obj is the owner of the object
+            if (obj == ownedObj->owner) {
+                // remove obj as the owner
+                ownedObj->owner = nullptr;
             }
         }
 
@@ -431,8 +471,8 @@ namespace Object
         GameObject* obj = Instantiate(type, pos, count);
 
         // set the object's velocity and acceleration
-        obj->velocity = dir * 20.0f;
-        obj->acceleration = dir * -20.0f;
+        obj->velocity = dir * 35.0f;
+        obj->acceleration = dir * -35.0f;
 
         // return a reference to the item stack created
         return obj;

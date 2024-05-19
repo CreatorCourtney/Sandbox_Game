@@ -5,6 +5,8 @@ using namespace Globals;
 int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     // FreeConsole(); // hides console
+    // set the random seed to the current time, so RNG rolls aren't predictable
+    srand(time(NULL));
 
     Frame::InitialiseFrameCreation();
 
@@ -19,9 +21,9 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
     }
 
     // spawn items for testing
-    Object::Instantiate(Object::Log_Item, Math::Vector2(700.0f, 300.0f), 13);
+    // Object::Instantiate(Object::Pine_Cone_Item, Math::Vector2(700.0f, 300.0f), 13);
 
-    Object::Instantiate(Object::Log_Item, Math::Vector2(500.0f, 300.0f), 2);
+    // Object::Instantiate(Object::Log_Item, Math::Vector2(500.0f, 300.0f), 2);
 
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
 
@@ -120,52 +122,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         case WM_KEYDOWN:
-            // enable bits
-            switch (wParam)
-            {
-                case 0x57: // w
-                    inputKeys |= 8; break;
-                case 0x41: // a
-                    inputKeys |= 4; break;
-                case 0x53: // s
-                    inputKeys |= 2; break;
-                case 0x44: // d
-                    inputKeys |= 1; break;
-                case VK_SHIFT:
-                    inputKeys |= 16; break;
-                case VK_ESCAPE:
-                    gameIsPaused = !gameIsPaused;
-                    break;
-                case VK_F11:
-                    ToggleFullscreen(hwnd, viewRect.Width, viewRect.Height); 
-                    break;
-                case VK_F9:
-                    debuggingTools ^= 1; break;
-                case VK_F8:
-                    debuggingTools ^= 2; break;
-                case VK_F7:
-                    player->hasCollision = !player->hasCollision;
-                    break;
-                case VK_F6:
-                    debuggingTools ^= 4; break;
-            } 
+            Input::keyPressFunc(wParam, hwnd);
             break;
 
         case WM_KEYUP:
-            // disable bits
-            switch (wParam)
-            {
-                case 0x57: // w
-                    inputKeys &= ~8; break;
-                case 0x41: // a
-                    inputKeys &= ~4; break;
-                case 0x53: // s
-                    inputKeys &= ~2; break;
-                case 0x44: // d
-                    inputKeys &= ~1; break;
-                case VK_SHIFT:
-                    inputKeys &= ~16; break;
-            } 
+            Input::keyReleaseFunc(wParam);
             break;
 
         case WM_LBUTTONDOWN: {
@@ -173,7 +134,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             
             int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
             Input::leftClickFunc(x, y);
-            
             break;
         }
 
@@ -182,7 +142,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
             int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
             Input::rightClickFunc(x, y);
-
             break;
         }
 
@@ -201,9 +160,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_DESTROY:
-            DeleteObject(hOffscreenBitmap);
-            DeleteDC(hOffscreenDC);
-            ReleaseDC(hwnd, g_hdc);
+            // cleanup
+            DestroyAllResources(hwnd);
             PostQuitMessage(0);
             break;
 
@@ -272,4 +230,56 @@ void ToggleFullscreen(HWND hwnd, int width, int height)
         SetWindowPos(hwnd, HWND_TOP, x, y, width, height, 
         SWP_NOZORDER | SWP_FRAMECHANGED);
     }
+}
+
+
+
+// deallocates all resources used by the game
+void DestroyAllResources(HWND hwnd)
+{
+    // destroy all the game objects
+    while (gameObjects.size() > 0) {
+        // destroys the first game object until there are none left
+        Destroy(gameObjects[0]);
+    }
+
+    // make sure the player and held object globals are destroyed
+    Destroy(player); Destroy(heldObject);
+
+    // destroy all the texture brushes in the animations objects
+    // playerAnimations
+    for (int i = 0; i < playerAnimations.front.size(); i++) {
+        delete playerAnimations.front[i];
+    }
+    for (int i = 0; i < playerAnimations.back.size(); i++) {
+        delete playerAnimations.back[i];
+    }
+    for (int i = 0; i < playerAnimations.left.size(); i++) {
+        delete playerAnimations.left[i];
+    }
+    for (int i = 0; i < playerAnimations.right.size(); i++) {
+        delete playerAnimations.right[i];
+    }
+
+    // destroy all the image objects and bitmaps
+    delete logImg; delete bridgeImg; delete waterImg; delete emptyImg;
+    delete hotbarImg; delete treeImg; delete wolfImg; 
+    delete falling_treeImg; delete stumpImg; delete Pine_ConeImg;
+    delete saplingImg;
+
+    delete overlay; delete background;
+
+    // destroy all the texture brushes
+    delete logBrush; delete bridgeBrush; delete waterBrush; delete grassBrush;
+    delete hotbarBrush; delete treeBrush; delete wolfBrush;
+    delete falling_treeBrush; delete stumpBrush; delete Pine_ConeBrush;
+    delete saplingBrush;
+
+    delete bkgBrush; delete overlayBrush;
+
+
+    // destroy additional bitmaps and DCs
+    DeleteObject(hOffscreenBitmap);
+    DeleteDC(hOffscreenDC);
+    ReleaseDC(hwnd, g_hdc);
 }

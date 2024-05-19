@@ -14,6 +14,11 @@ namespace Input
         // img is the image that will be placed into the cell
         Gdiplus::Image* img = nullptr;
         int x = cell.x*sideLen, y = cell.y*sideLen;
+        
+        // the value that will be returned. negative for unsuccessful execution,
+        // zero mean you've place a cell, otherwise, when removing a cell, return the 
+        // type removed
+        int ext = 0;
 
         switch (objType)
         {
@@ -25,13 +30,15 @@ namespace Input
                 Frame::AddTreeToOverlay(cell, updateBkgBrush);
 
                 // set the cell space to be a tree
-                grid[cell.x][cell.y] |= TREE;
+                // use = (not |=) because previous data SHOULD be overwritten; if the tree grew
+                // from a sapling, the cell should no longer contain any data about the sapling
+                grid[cell.x][cell.y] = TREE;
                 break;
                 
 
             case LOG: 
                 // cell is occupied
-                if (grid[cell.x][cell.y]&0x4000) return 1;
+                if (grid[cell.x][cell.y]&0x4000) return -2;
 
                 img = logImg; // image drawn will be a log
                 grid[cell.x][cell.y] |= LOG;
@@ -40,7 +47,7 @@ namespace Input
 
             case BRIDGE:
                 // cell is occupied
-                if (grid[cell.x][cell.y]&0x4000) return 1;
+                if (grid[cell.x][cell.y]&0x4000) return -2;
                 img = bridgeImg;
                 grid[cell.x][cell.y] |= BRIDGE;
                 grid[cell.x][cell.y] &= ~0x2000; // turn off barrier bit
@@ -57,14 +64,22 @@ namespace Input
                 grid[cell.x][cell.y] = STUMP;
                 break;
 
+            case SAPLING:
+                // cell is occupied or water
+                if (grid[cell.x][cell.y]&0x5000) return -2;
+
+                // draw the empty tile first, in case of loading a map with a sapling, but not a tree
+                Frame::DrawImageToBitmap(background, emptyImg, x, y);
+                img = saplingImg;
+                grid[cell.x][cell.y] |= SAPLING;
+                break;
 
             case EMPTY: 
             {
                 // remove building in the cell
                 // if it IS indestructible or NOT occupied, return
-                if (grid[cell.x][cell.y]&0x8000||!grid[cell.x][cell.y]&0x4000) return 2;
-                // this number can reenable specified bits, like in case 3
-                int num = 0;
+                if (grid[cell.x][cell.y]&0x8000||!grid[cell.x][cell.y]&0x4000) return -3;
+                
                 
                 // first byte represents info about the cell, this is the object being removed
                 switch (grid[cell.x][cell.y]&255)
@@ -100,6 +115,13 @@ namespace Input
                         break;
                     }
 
+                    case 5: { // sapling
+                        // spawn a pine cone
+                        Math::Vector2 pos(cell.x*sideLen, cell.y*sideLen);
+                        Object::spawnItemStack(Object::Pine_Cone_Item, pos, 1);
+                        break;
+                    }
+
                     default: break;
                 }
 
@@ -129,17 +151,23 @@ namespace Input
 
         // update the background brush, so that the change is observable
         if (updateBkgBrush) {
-            // clean up the old brush
-            delete bkgBrush;
+            Gdiplus::TextureBrush *newBrush = new Gdiplus::TextureBrush(background);
 
-            // create a new brush
-            bkgBrush = new Gdiplus::TextureBrush(background);
-            // set the wrap mode to only draw the background once
-            bkgBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+            // upon successful creation, update bkgBrush
+            if (newBrush->GetLastStatus() == Gdiplus::Ok)
+            {
+                // clean up the old brush
+                delete bkgBrush;
+
+                // update bkgBrush to the new brush
+                bkgBrush = newBrush;
+                // set the wrap mode to only draw the background once
+                bkgBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+            }
         }
 
         // 0 for successful placement
-        return 0; 
+        return ext; 
     }
 
     // for convenience
@@ -223,6 +251,64 @@ namespace Input
     }
 
 
+    // what happens when the player presses down a key
+    void keyPressFunc(WPARAM wParam, HWND hwnd)
+    {
+        // enable bits
+        switch (wParam)
+        {
+            case 0x57: // w
+                inputKeys |= 8; break;
+            case 0x41: // a
+                inputKeys |= 4; break;
+            case 0x53: // s
+                inputKeys |= 2; break;
+            case 0x44: // d
+                inputKeys |= 1; break;
+            case VK_SHIFT:
+                inputKeys |= 16; break;
+            case VK_ESCAPE:
+                gameIsPaused = !gameIsPaused;
+                break;
+            case VK_F11:
+                // commented out for now bc bad, will work on this later :3
+                // ToggleFullscreen(hwnd, viewRect.Width, viewRect.Height); 
+                break;
+            case VK_F9:
+                debuggingTools ^= 1; break;
+            case VK_F8:
+                debuggingTools ^= 2; break;
+            case VK_F7:
+                player->hasCollision = !player->hasCollision;
+                break;
+            case VK_F6:
+                debuggingTools ^= 4; break;
+        }
+    }
+
+    // what happens when the player releases a key
+    void keyReleaseFunc(WPARAM wParam)
+    {
+        // disable bits
+        switch (wParam)
+        {
+            case 0x57: // w
+                inputKeys &= ~8; break;
+            case 0x41: // a
+                inputKeys &= ~4; break;
+            case 0x53: // s
+                inputKeys &= ~2; break;
+            case 0x44: // d
+                inputKeys &= ~1; break;
+            case VK_SHIFT:
+                inputKeys &= ~16; break;
+        }
+    }
+
+
+
+
+
     // sets the selected object to be held by the player
     void setHeldObject(Object::GameObject *obj)
     {
@@ -232,6 +318,11 @@ namespace Input
             case Object::Log_Item:
                 // player is building with logs
                 buildingType = LOG;
+                break;
+
+            case Object::Pine_Cone_Item:
+                // player is planting tree saplings
+                buildingType = SAPLING;
                 break;
 
             default: return; // not an item, cannot be held
@@ -257,6 +348,9 @@ namespace Input
         // release the held object
         Object::GameObject *obj = heldObject;
         heldObject = nullptr;
+        // player can no longer build anything, set the building type back to EMPTY
+        buildingType = EMPTY;
+
 
         // initiate the velocity in the direction of the mouse
         Math::Vector2 dir = Math::getUnitVector(obj->centrePos, mousePosREAL);
@@ -284,11 +378,8 @@ namespace Input
                 break;
             }
         }
-        
+
         // remove the player as the objec't owner
         obj->owner = nullptr;
-
-        // player can no longer build anything, set the building type back to EMPTY
-        buildingType = EMPTY;
     }
 }

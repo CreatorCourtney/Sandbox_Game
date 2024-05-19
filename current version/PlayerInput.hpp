@@ -19,6 +19,14 @@ namespace Input
     // if the player IS holding an item, attempt to place it, otherwise, do nothing (for now c:)
     void rightClickFunc(int x, int y);
 
+    // what happens when the player presses down a key
+    void keyPressFunc(WPARAM wParam, HWND hwnd);
+    // what happens when the player releases a key
+    void keyReleaseFunc(WPARAM wParam);
+
+
+
+
     // sets the selected object to be held by the player
     void setHeldObject(Object::GameObject *obj);
     // throw the object the player is currently holding

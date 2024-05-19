@@ -60,9 +60,9 @@ namespace Globals {
     Gdiplus::TextureBrush * overlayBrush;
 
     Gdiplus::Image *logImg, *bridgeImg, *waterImg, *emptyImg, *hotbarImg, *treeImg, *wolfImg,
-    *falling_treeImg, *stumpImg;
+    *falling_treeImg, *stumpImg, *Pine_ConeImg, *saplingImg;
     Gdiplus::TextureBrush *logBrush, *bridgeBrush, *waterBrush, *grassBrush, *hotbarBrush, *treeBrush,
-    *wolfBrush, *falling_treeBrush, *stumpBrush;
+    *wolfBrush, *falling_treeBrush, *stumpBrush, *Pine_ConeBrush, *saplingBrush;
 
     Object::Animations playerAnimations;
 
@@ -81,8 +81,6 @@ namespace Globals {
     int numObjectsinOverlay = 0;
 
 
-    Gdiplus::Bitmap * createEmptyBitmap(int width, int height);
-
     float sideLen;
     std::vector<std::vector<CellObject>> grid;
 
@@ -91,6 +89,8 @@ namespace Globals {
     // text colours
     Gdiplus::Color white(255,255,255), red(255,0,0), green(0,255,0), blue(0,0,255), black(0,0,0);
 
+
+    Gdiplus::Bitmap * createEmptyBitmap(int width, int height);
     int LoadImages();
     void SetGrid();
 }

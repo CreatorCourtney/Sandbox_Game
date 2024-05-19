@@ -67,19 +67,23 @@ namespace Func
         // when the timer reaches 0, destroy the object
         if (t->timer <= 0.0f) {
 
-            // once the tree is gone, spawn some log items in where it fell
+            // once the tree is gone, spawn some log + pine cone items in where it fell
             // the further log will be the height of the tree (size.x) to the LEFT of pos,
             // the nearest one could be at pos
 
-            int n = 5; // the number of logs to be spawned
+            // 5 wood will spawn, 0-2 seeds will spawn
+            int seeds = rand()%3, n = seeds+5;
+            
             // step between each item object, and the y position of each object
             float step = t->size.x / n, y = t->pos.y + t->size.y;
 
-            // spawn n log items
+            // spawn n items
             for (int i = 1; i <= n; i++)
             {
                 Math::Vector2 pos(t->pos.x - step*i, y);
-                Object::spawnItemStack(Object::Log_Item, pos, 1);
+                // spawn logs first, seeds last
+                Object::EntityType item = (i<6)? Object::Log_Item : Object::Pine_Cone_Item;
+                Object::spawnItemStack(item, pos, 1);
             }
 
             // destroy the falling tree object
@@ -111,19 +115,26 @@ namespace Func
         // update the centre position, which is in the centre of the object's hitbox
         item->centrePos = item->pos + Math::Vector2(item->size.x/2, item->size.y/2);
 
-        // when one component of the velocity is zero, set that accelaration component to zero
-        // to account for floating point imprecision, only do this if it's close enough to zero
-        if (Math::absf(item->velocity.x) <= 5.0f) {
-            item->velocity.x = item->acceleration.x = 0.0f;
-        }
-        if (Math::absf(item->velocity.y) <= 5.0f) {
-            item->velocity.y = item->acceleration.y = 0.0f;
-        }
+        /*
+            when two vectors point in the same direction, their dot product is positive.
+            when pointing in different (non orthogonal) directions, it is negative
 
-        // once the velocity reaches zero, set the item's pos function back to default, 
-        // to avoid doing these checks every frame
-        if (item->velocity == Math::Zero2)
+            while the acceleration is pointing opposite the velocity, the entity is slowing down
+            if the dot product of the acceleration and velocity is positive, the entity has
+            already stopped, and is now speeding up. 
+
+            to stop this, cancel the acceleration once the dot product is non-negative
+        */
+        
+        // dot product is non-negative
+        if (item->velocity * item->acceleration >= 0.0f)
+        {
+            // set velocity and acceleration both to zero 
+            item->velocity = item->acceleration = Math::Zero2;
+            // set the item's position function to default, to avoid
+            // making this check every frame
             item->positionFunc = defaultPositionFunc;
+        }
     }
 
 

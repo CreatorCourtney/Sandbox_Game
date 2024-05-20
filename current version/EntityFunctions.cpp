@@ -65,8 +65,8 @@ namespace Func
     void fallingTreePositionFunc(Object::GameObject *t)
     {
         // when the timer reaches 0, destroy the object
-        if (t->timer <= 0.0f) {
-
+        if (t->timer <= 0.0f) 
+        {
             // once the tree is gone, spawn some log + pine cone items in where it fell
             // the further log will be the height of the tree (size.x) to the LEFT of pos,
             // the nearest one could be at pos

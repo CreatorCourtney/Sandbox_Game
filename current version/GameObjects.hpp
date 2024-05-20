@@ -47,8 +47,6 @@ byte 4:
 #define STUMP    0b00010001000000000110000000000100 // 8 health
 #define SAPLING  0b00000101000000000110000000000101 // 2 health
 
-typedef int CellObject;
-
 
 namespace Object
 {
@@ -100,15 +98,15 @@ namespace Object
     public:
         // position of the top left corner of the hitbox
         Math::Vector2 pos;
-        // size of the hitbox
-        Math::Point2 size;
         // position of the centre of the hitbox
         Math::Vector2 centrePos;
-        Math::Point2 cell; // the cell the object lies in
-
         // object's velocity and acceleration
         Math::Vector2 velocity;
         Math::Vector2 acceleration;
+        
+
+        Math::Point2 size; // size of the hitbox
+        Math::Point2 cell; // the cell the object lies in
 
         EntityType type; // which type of entity it is
         Animations animations; // images used for animating
@@ -123,7 +121,7 @@ namespace Object
         int hp, maxHP; // object's health/health cap
         float speed; // scalar movement speed
         int idx; // index of the object in the gameObjects vector
-        float timer; // for obects with mechanics dependent on time
+        float timer = 0.0f; // for obects with mechanics dependent on time
 
 
         bool hasCollision;
@@ -135,7 +133,7 @@ namespace Object
 
 
         // constructor
-        GameObject(Math::Vector2 Pos, Math::Vector2 Velocity, EntityType Type, int Hp);
+        GameObject(Math::Vector2 Pos, Math::Vector2 Velocity, EntityType Type, int Hp, int Idx);
 
 
         // calls the behaviour functions, updating member variables
@@ -174,6 +172,7 @@ namespace Object
         // choses one image from the animations object that will be drawn to the screen
         Gdiplus::TextureBrush* (*animationScript)(GameObject*, Math::Point2*);
         
+        bool hasAnimation = false;
         Gdiplus::Matrix *brushScaleMatrix; // scale for image drawing purposes
         Math::Point2 srcDimensions; // dimensions (in pixels) of the image file
     };

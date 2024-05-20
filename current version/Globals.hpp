@@ -10,18 +10,21 @@
 
 #include "GameMath.hpp"
 #include "GameObjects.hpp"
+#include "Storage.hpp"
 // had to include here to avoid compiler issues, NOT included in GameObjects.hpp
 #include "EntityFunctions.hpp"
 #include "Collisions.hpp"
 
 namespace Globals {
     float g_scale = 1.0f;
+
     int wndWidth, wndHeight;
     int bkgWidth, bkgHeight;
     Gdiplus::Rect viewRect(0, 0, 900, 600);
     HDC hOffscreenDC, g_hdc;
     HBITMAP hOffscreenBitmap;
     clock_t begin_time = clock();
+
     float deltaTime = 0.0f;
     int prevFPS = 0;
     bool gameIsPaused = 0;
@@ -66,9 +69,6 @@ namespace Globals {
 
     Object::Animations playerAnimations;
 
-    Math::Vector2 wndScale;
-    float UIScale = 1.0f, currUIScale;
-
 
     Object::GameObject * player;
     // object the player is holding
@@ -81,8 +81,8 @@ namespace Globals {
     int numObjectsinOverlay = 0;
 
 
-    float sideLen;
-    std::vector<std::vector<CellObject>> grid;
+    float sideLen = 52.0f;
+    std::vector<std::vector<int>> grid;
 
     int treeHeight = 10, treeWidth = 3; // dimensions of trees (in grid cells)
 
@@ -93,6 +93,17 @@ namespace Globals {
     Gdiplus::Bitmap * createEmptyBitmap(int width, int height);
     int LoadImages();
     void SetGrid();
+
+    // for loading/unloading a scene
+    // loads the attributes of a level object into the global variables
+    void LoadSceneFromLevelObject(Storage::Level level);
+    // stores the global variables into a level object
+    Storage::Level SaveSceneToLevelObject();
+
+    // loads the user's settings into global variables
+    void LoadUserSettingsToObject(Storage::UserSettings settings);
+    // saves settings globals into a UserSettings object
+    Storage::UserSettings saveUserSettingsToObject();
 }
 
 #endif

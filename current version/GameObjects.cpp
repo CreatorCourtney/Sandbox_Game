@@ -29,12 +29,9 @@ namespace Object
 
 
     // constructor for GameObject
-    GameObject::GameObject(Math::Vector2 Pos, Math::Vector2 Velocity, EntityType Type, int Hp)
-    : pos(Pos), velocity(Velocity), type(Type), hp(Hp) 
+    GameObject::GameObject(Math::Vector2 Pos, Math::Vector2 Velocity, EntityType Type, int Hp, int Idx)
+    : pos(Pos), velocity(Velocity), type(Type), hp(Hp), idx(Idx) 
     {
-        // index is the size of the gameObjects vector, which gets incremented after the creation of this
-        idx = gameObjects.size();
-
         switch (type)
         {
             case Player:
@@ -46,6 +43,7 @@ namespace Object
                 animationScript = Func::playerAnimationScript;
 
                 // attributes
+                hasAnimation = true;
                 cellularDimensions = {1, 1, size.x, size.y};
                 hasCollision = true;
                 radius = Math::Max(size.x/2, size.y/2);
@@ -59,12 +57,6 @@ namespace Object
                 collisionFunc = Collisions::defaultCollisionFunction;
 
                 // misc
-
-                // cell size is relative to the size of the player's hitbox
-                // but add 2 so they can more easily walk through 1 wide gaps
-                sideLen = Math::maxf(size.x, size.y)+2.0f;
-                SetGrid(); // map created relative to the size of the player
-
                 // set the interaction radius
                 interactRange = interactRangeCells * sideLen;
                 cell = findCell(centrePos);
@@ -103,6 +95,7 @@ namespace Object
                 animationScript = Func::treeFallingAnimations;
 
                 // attributes
+                hasAnimation = true;
                 hasCollision = false;
                 centrePos = pos;
                 timer = 1.0f; // amount of time it will exist
@@ -185,18 +178,22 @@ namespace Object
 
         // preemptively set the brushes so that they don't wrap, thus drawing the image only once
         for (int i = 0; i < animations.front.size(); i++) {
+            if (animations.front[i]->GetLastStatus() == Gdiplus::Ok)
             animations.front[i]->SetWrapMode(Gdiplus::WrapModeClamp);
         }
         for (int i = 0; i < animations.back.size(); i++) {
+            if (animations.back[i]->GetLastStatus() == Gdiplus::Ok)
             animations.back[i]->SetWrapMode(Gdiplus::WrapModeClamp);
         }
         for (int i = 0; i < animations.left.size(); i++) {
+            if (animations.left[i]->GetLastStatus() == Gdiplus::Ok)
             animations.left[i]->SetWrapMode(Gdiplus::WrapModeClamp);
         }
         for (int i = 0; i < animations.right.size(); i++) {
+            if (animations.right[i]->GetLastStatus() == Gdiplus::Ok)
             animations.right[i]->SetWrapMode(Gdiplus::WrapModeClamp);
         }
-        if (brush->GetLastStatus() == Gdiplus::Ok) 
+        if (!hasAnimation && brush->GetLastStatus() == Gdiplus::Ok) 
             brush->SetWrapMode(Gdiplus::WrapModeClamp);
     }
 
@@ -264,6 +261,12 @@ namespace Object
     {
         // since each cell is 'sideLen' units wide and tall, dividing a coordinate
         // by 'sideLen' will yield the cell indices
+
+        // if sideLen == 0, or if grid doesn't exist, there will be an error,
+        // just return (0, 0) to avoid a crash
+
+        if (sideLen == 0.0f || grid.size() == 0) return Math::Point2(0, 0);
+
         int x = int(pos.x/sideLen), y = int(pos.y/sideLen);
 
         // since the coordinates should be able to be used as indices in the 'grid'
@@ -376,8 +379,8 @@ namespace Object
     // for instantiating game objects. returns a reference to the object created
     GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp)
     {
-        // create the object 
-        GameObject *obj = new GameObject(pos, Math::Vector2(0.0f, 0.0f), type, hp);
+        // create the object
+        GameObject *obj = new GameObject(pos, Math::Vector2(0.0f, 0.0f), type, hp, gameObjects.size());
         // add it to the game objects vector
         gameObjects.push_back(obj);
 

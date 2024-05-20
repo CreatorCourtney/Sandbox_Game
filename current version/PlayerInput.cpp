@@ -37,8 +37,11 @@ namespace Input
                 
 
             case LOG: 
-                // cell is occupied
-                if (grid[cell.x][cell.y]&0x4000) return -2;
+                // cell is occupied, AND the placement was made by player, not laoding
+                if (grid[cell.x][cell.y]&0x4000 && updateBkgBrush) return -2;
+
+                // draw the empty tile first, in case of loading a map with a sapling, but not a tree
+                Frame::DrawImageToBitmap(background, emptyImg, x, y);
 
                 img = logImg; // image drawn will be a log
                 grid[cell.x][cell.y] |= LOG;
@@ -46,8 +49,12 @@ namespace Input
 
 
             case BRIDGE:
-                // cell is occupied
-                if (grid[cell.x][cell.y]&0x4000) return -2;
+                // cell is occupied, AND the placement was made by player, not laoding
+                if (grid[cell.x][cell.y]&0x4000 && updateBkgBrush) return -2;
+
+                // draw the empty tile first, in case of loading a map with a sapling, but not a tree
+                Frame::DrawImageToBitmap(background, emptyImg, x, y);
+
                 img = bridgeImg;
                 grid[cell.x][cell.y] |= BRIDGE;
                 grid[cell.x][cell.y] &= ~0x2000; // turn off barrier bit
@@ -65,8 +72,8 @@ namespace Input
                 break;
 
             case SAPLING:
-                // cell is occupied or water
-                if (grid[cell.x][cell.y]&0x5000) return -2;
+                // cell is occupied or water, AND the placement was made by player, not laoding
+                if (grid[cell.x][cell.y]&0x5000 && updateBkgBrush) return -2;
 
                 // draw the empty tile first, in case of loading a map with a sapling, but not a tree
                 Frame::DrawImageToBitmap(background, emptyImg, x, y);
@@ -239,6 +246,7 @@ namespace Input
         // distance from the player to the cell they tried to click
         float r = (mousePosREAL - player->centrePos).length();
         if (r > interactRange) return; // clicked too far away, do nothing
+
 
         // find the cell the player selected
         Math::Point2 cell = Object::findCell(mousePosREAL);

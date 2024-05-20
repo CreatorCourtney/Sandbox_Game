@@ -10,15 +10,17 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
 
     Frame::InitialiseFrameCreation();
 
+    // SetGrid();
+
     // instantiate the player
-    Object::Instantiate(Object::Player, Math::Vector2(400.0f, 200.0f), 5);
-    player = gameObjects[0];
+    // Object::Instantiate(Object::Player, Math::Vector2(400.0f, 200.0f), 5);
+    // player = gameObjects[0];
 
 
     // spawn wolves for testing
-    for (int i = 0; i < 0; i++) {
-        Object::Instantiate(Object::Wolf, Math::Vector2(500.0f, 300.0f), 3);
-    }
+    // for (int i = 0; i < 0; i++) {
+    //     Object::Instantiate(Object::Wolf, Math::Vector2(500.0f, 300.0f), 3);
+    // }
 
     // spawn items for testing
     // Object::Instantiate(Object::Pine_Cone_Item, Math::Vector2(700.0f, 300.0f), 13);
@@ -58,6 +60,7 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
 
     HCURSOR cursor = LoadCursor(NULL, IDC_ARROW);
 
+
     // main message loop
     MSG msg = { };
     while (GetMessage(&msg, NULL, 0, 0) > 0)
@@ -90,12 +93,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
-        case WM_CREATE:
+        case WM_CREATE: {
+            Storage::Level lvl = Storage::LoadLevelObjectFromFile("data/Default Level.txt");
+            LoadSceneFromLevelObject(lvl);
+
             // get device context for the window
             InitialiseOffscreenDC(hwnd);
             // draw the grid initially
             Frame::DrawWholeGrid();
             break;
+        }
 
         case WM_SIZE: {
             int newWidth = LOWORD(lParam), newHeight = HIWORD(lParam);
@@ -108,15 +115,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 SelectObject(hOffscreenDC, hNewBitmap);
                 DeleteObject(hOffscreenBitmap);
                 hOffscreenBitmap = hNewBitmap;
-
-                wndScale = Math::Vector2(
-                    (float)wndWidth/GetSystemMetrics(SM_CXFULLSCREEN),
-                    (float)wndHeight/GetSystemMetrics(SM_CYFULLSCREEN)
-                );
-
-                currUIScale = 
-                    Math::clampf(0.5f, 1.0f, 
-                    Math::minf(wndScale.x, wndScale.y))*UIScale;
             }
             break;
         }
@@ -159,11 +157,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             CopyOffscreenToWindow(hwnd, g_hdc);
             break;
 
-        case WM_DESTROY:
+        case WM_DESTROY: {
+            Storage::Level lvl = SaveSceneToLevelObject();
+            int ext = Storage::SaveSceneToFile(lvl); 
+
             // cleanup
             DestroyAllResources(hwnd);
             PostQuitMessage(0);
             break;
+        }
 
         default:
             return DefWindowProc(hwnd, uMsg, wParam, lParam);
@@ -189,14 +191,6 @@ void InitialiseOffscreenDC(HWND hwnd)
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
     FillRect(hOffscreenDC, &rect, bkg);
     DeleteObject(bkg); // deallocate memory for bkg brush
-
-    wndScale = Math::Vector2(
-        (float)wndWidth/GetSystemMetrics(SM_CXFULLSCREEN),
-        (float)wndHeight/GetSystemMetrics(SM_CYFULLSCREEN)
-    );
-    currUIScale = 
-        Math::clampf(0.5f, 1.0f, 
-        Math::minf(wndScale.x, wndScale.y))*UIScale;
 }
 
 void CopyOffscreenToWindow(HWND hwnd, HDC hdc)

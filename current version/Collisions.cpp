@@ -136,7 +136,6 @@ namespace Collisions
         of the bottom right corner of the hitbox
         */
 
-
         // top left
         Math::Vector2 disp = Math::Zero2;
         Math::Point2 p = Object::findCell(o->pos);

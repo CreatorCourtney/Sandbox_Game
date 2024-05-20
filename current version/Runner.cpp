@@ -7,6 +7,7 @@
 #include "Collisions.cpp"
 #include "EntityFunctions.cpp"
 #include "PlayerInput.cpp"
+#include "Storage.cpp"
 
 // open the exe
 int main() {

@@ -3,7 +3,8 @@
 
 #include "Globals.hpp"
 
-namespace Globals {
+namespace Globals 
+{
     int LoadImages() {
         logImg = Gdiplus::Image::FromFile(L"images/Log.png");
         if (logImg->GetLastStatus() != Gdiplus::Ok) return 2;
@@ -104,49 +105,6 @@ namespace Globals {
 
     void SetGrid()
     {
-        // grid = {
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,TREE,0,0,0,0,0},
-        //     {0,0,0,TREE,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,TREE,0,0,0,0},
-        //     {0,0,0,TREE,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,TREE,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,TREE,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,TREE,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,TREE,0,TREE,TREE,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,TREE,0,0,0,0},
-        //     {0,TREE,0,TREE,TREE,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,TREE,0,TREE,TREE,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,TREE,0,TREE,TREE,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0},
-        //     {0,0,0,0,0,0,0,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,WATER|BARRIER,0,0,0,0,0,0,0}
-        // };
-        // std::cout << TREE <<'\n';
         bkgWidth = sideLen * grid.size(); bkgHeight = sideLen * grid[0].size();
         background = createEmptyBitmap(bkgWidth, bkgHeight);
         overlay = createEmptyBitmap(bkgWidth, bkgHeight);
@@ -164,6 +122,78 @@ namespace Globals {
         return bmp;
     }
 
+
+
+    // finds the index of a point in a vector of points,
+    // returns -1 if the point is not in the vector
+    int findPointIndexInVector(Math::Point2 p, std::vector<Math::Point2> vec)
+    {
+        // set the result to -1, get the length of the vector
+        int idx = -1, n = vec.size();
+        // check all items in vec to see if p is there
+        for (int i = 0; i < n; i++) {
+            if (vec[i] == p) {
+                // if p is found, update idx and exit the loop
+                idx = i; 
+                break;
+            }
+        }
+        // return the index found
+        return idx;
+    }
+
+    // updates all the cells with time elements (like sapling growth)
+    void updateTimedCells()
+    {
+        for (int i = 0; i < timedCells.size(); i++)
+        {
+            // get the cell info from the grid
+            Math::Point2 cell = timedCells[i];
+            int cellInfo = grid[cell.x][cell.y];
+
+            // the timer bits of cellInfo as a regular int
+            int currTimer = (cellInfo&TIMER)>>26;
+
+            switch (cellInfo & 255) // just the first byte (cell's ID)
+            {
+                case 5: // sapling
+
+                    // growth condition met
+                    if (((int)g_time%saplingTime)==0) {
+                        // ensure this only happens when the time is close to an integer
+                        // d = amount of time from last INTEGER
+                        float d = g_time - (int)g_time;
+
+                        if (d <= 0.01f) // margin of error
+                            currTimer++; // increment the time when successful
+                    }
+
+                    // all timer bits have been enabled
+                    if (currTimer >= 10) {
+                        // when the sapling grows, a tree will be placed in the cell
+                        Input::PlaceObjectInCell(cell, TREE);
+
+                        // remove the cell from the vector, and decrement i, accordingly
+                        timedCells.erase(timedCells.begin() + i--);
+                        continue;
+                    }
+                    break;
+
+                default: continue; // not actually a timed object
+            }
+
+            // update the cell's timer info
+            currTimer <<= 26; // set the bits of currTimer back in the correct position
+            // clear the cellInfo's timer bits
+            cellInfo &= ~TIMER;
+            // set the timer bits with currTimer
+            cellInfo |= currTimer;
+            // update the actual grid
+            grid[cell.x][cell.y] = cellInfo;
+        }
+    }
+
+
     // loads the attributes of a level object into the global variables
     void LoadSceneFromLevelObject(Storage::Level level)
     {
@@ -180,6 +210,11 @@ namespace Globals {
         interactRange = interactRangeCells * sideLen; // set the interaction radius
         grid = level.grid; // load the array of all cells
 
+        // put all timed cells in the timedCells vector
+
+        // set the current time
+        g_time = level.time;
+
         // initialise the background/overlay images
         SetGrid();
     }
@@ -189,7 +224,7 @@ namespace Globals {
     {
         // create a level object using global variables
         Storage::Level scene(player, heldObject, buildingType,
-            gameObjects, sideLen, grid);
+            gameObjects, sideLen, grid, g_time);
 
 
         // return the level object created

@@ -22,13 +22,6 @@ namespace Func
         // normalise the vector so that players can't walk faster by moving diagonally
         p->velocity.normalise(); 
         p->velocity = p->velocity*s; // multiply the unit vector by movement speed
-
-        // update the direction you're facing based on velocity
-        if (p->velocity.y > 0.0f) p->animations.facing = 0;
-        else if (p->velocity.y < 0.0f) p->animations.facing = 1;
-        else if (p->velocity.x > 0.0f) p->animations.facing = 3;
-        else if (p->velocity.x < 0.0f) p->animations.facing = 2;
-        else p->animations.stage = 0.0f;
     }
 
 
@@ -155,8 +148,20 @@ namespace Func
         // image in the vector. otherwise, use the index to choose an image.
         // also increment the stage by adding deltaTime to it
 
-        Gdiplus::TextureBrush *res;
 
+        // update the direction you're facing based on direction to the mouse
+        Math::Vector2 dir = Math::getUnitVector(p->centrePos, mousePosREAL);
+
+        if (dir.x > SIN45) p->animations.facing = 3; // looking right
+        else if (dir.x < -SIN45) p->animations.facing = 2; // looking right
+        else if (dir.y <= -SIN45) p->animations.facing = 1; // looking backwards
+        else p->animations.facing = 0; // looking forwards
+
+        // when not moving, keep the animation stage at 0
+        if (p->velocity == Math::Zero2) p->animations.stage = 0.0f;
+
+
+        Gdiplus::TextureBrush *res;
         switch (p->animations.facing)
         {
             case 0: { // forwards

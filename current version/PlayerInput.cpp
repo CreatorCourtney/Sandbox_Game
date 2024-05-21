@@ -20,9 +20,10 @@ namespace Input
         // type removed
         int ext = 0;
 
-        switch (objType)
+        switch (objType & 255) // just the first byte, containing cell ID
         {
-            case TREE:
+            case 3: // tree
+
                 // empty grass tile drawn where the base is
                 img = emptyImg;
                 
@@ -36,24 +37,28 @@ namespace Input
                 break;
                 
 
-            case LOG: 
-                // cell is occupied, AND the placement was made by player, not laoding
+            case 1: // log 
+
+                // cell is occupied, AND the placement was made by player, not loading
                 if (grid[cell.x][cell.y]&0x4000 && updateBkgBrush) return -2;
 
-                // draw the empty tile first, in case of loading a map with a sapling, but not a tree
-                Frame::DrawImageToBitmap(background, emptyImg, x, y);
+                // draw the background of the cell first
+                if (grid[cell.x][cell.y]&WATER) Frame::DrawImageToBitmap(background, waterImg, x, y);
+                else Frame::DrawImageToBitmap(background, emptyImg, x, y);
 
                 img = logImg; // image drawn will be a log
                 grid[cell.x][cell.y] |= LOG;
                 break;
 
 
-            case BRIDGE:
-                // cell is occupied, AND the placement was made by player, not laoding
+            case 2: // bridge
+
+                // cell is occupied, AND the placement was made by player, not loading
                 if (grid[cell.x][cell.y]&0x4000 && updateBkgBrush) return -2;
 
-                // draw the empty tile first, in case of loading a map with a sapling, but not a tree
-                Frame::DrawImageToBitmap(background, emptyImg, x, y);
+                // draw the background of the cell first
+                if (grid[cell.x][cell.y]&WATER) Frame::DrawImageToBitmap(background, waterImg, x, y);
+                else Frame::DrawImageToBitmap(background, emptyImg, x, y);
 
                 img = bridgeImg;
                 grid[cell.x][cell.y] |= BRIDGE;
@@ -61,7 +66,8 @@ namespace Input
                 break;
 
 
-            case STUMP:
+            case 4: // stump
+
                 // draw the empty tile first, in case of loading a map with a stump, but not a tree
                 Frame::DrawImageToBitmap(background, emptyImg, x, y);
 
@@ -71,15 +77,30 @@ namespace Input
                 grid[cell.x][cell.y] = STUMP;
                 break;
 
-            case SAPLING:
-                // cell is occupied or water, AND the placement was made by player, not laoding
+            case 5: { // sapling
+
+                // cell is occupied or water, AND the placement was made by player, not loading
                 if (grid[cell.x][cell.y]&0x5000 && updateBkgBrush) return -2;
+
+                // look to see if the cell is already in the timed cells vector
+                int idx = findPointIndexInVector(cell, timedCells);
+
+                // the cell doesn't exist in timed cells
+                if (idx == -1) {
+                    // add the cell to timed cells
+                    timedCells.push_back(cell);
+                } else {
+                    // clear data about cell timer & health
+                    grid[cell.x][cell.y] &= ~TIMER;
+                    grid[cell.x][cell.y] &= ~HEALTH;
+                }
 
                 // draw the empty tile first, in case of loading a map with a sapling, but not a tree
                 Frame::DrawImageToBitmap(background, emptyImg, x, y);
                 img = saplingImg;
                 grid[cell.x][cell.y] |= SAPLING;
                 break;
+            }
 
             case EMPTY: 
             {
@@ -126,6 +147,11 @@ namespace Input
                         // spawn a pine cone
                         Math::Vector2 pos(cell.x*sideLen, cell.y*sideLen);
                         Object::spawnItemStack(Object::Pine_Cone_Item, pos, 1);
+
+                        // remove the cell from the timed cells vector
+                        int idx = findPointIndexInVector(cell, timedCells);
+                        if (idx != -1) timedCells.erase(timedCells.begin() + idx);
+
                         break;
                     }
 

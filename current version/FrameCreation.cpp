@@ -339,6 +339,9 @@ namespace Frame
         // tree count
         entityTxt = L"num objects in overlay: "+std::to_wstring(numObjectsinOverlay);
         placeText(10, yPos, entityTxt, white, 10, graphics); yPos += 15;
+        // timed object count
+        entityTxt = L"num timed cells: "+std::to_wstring(timedCells.size());
+        placeText(10, yPos, entityTxt, white, 10, graphics); yPos += 15;
 
         // debug tools
         placeText(10, yPos, L"press F8 to toggle speed boost", 

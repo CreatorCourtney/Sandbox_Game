@@ -25,12 +25,17 @@ namespace Globals {
     HBITMAP hOffscreenBitmap;
     clock_t begin_time = clock();
 
+    float g_time = 0.0f; // the current time in game, saved as a float
+
     float deltaTime = 0.0f;
     int prevFPS = 0;
     bool gameIsPaused = 0;
 
     int interactRangeCells = 3; // player can only interact with things within X cells
     float interactRange = 0.0f; // actual interaction distance
+
+    // how frequently the sapling timer gets updated
+    int saplingTime = 1;
 
 
     // the position of the player's mouse on the screen
@@ -77,6 +82,9 @@ namespace Globals {
     int buildingType = EMPTY;
 
 
+    // a vector containing all cells with time dependent functions (such as saplings)
+    std::vector<Math::Point2> timedCells;
+    // a vector containing pointers to all game objects
     std::vector<Object::GameObject*> gameObjects;
     int numObjectsinOverlay = 0;
 
@@ -93,6 +101,15 @@ namespace Globals {
     Gdiplus::Bitmap * createEmptyBitmap(int width, int height);
     int LoadImages();
     void SetGrid();
+
+
+    // finds the index of a point in a vector of points,
+    // returns -1 if the point is not in the vector
+    int findPointIndexInVector(Math::Point2 p, std::vector<Math::Point2> vec);
+
+    // updates all the cells with time elements (like sapling growth)
+    void updateTimedCells();
+
 
     // for loading/unloading a scene
     // loads the attributes of a level object into the global variables

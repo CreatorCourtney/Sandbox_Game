@@ -5,9 +5,9 @@ namespace Storage
     // constructor
     Level::Level(Object::GameObject *Player, Object::GameObject *HeldObject, int BuildingType,
         std::vector<Object::GameObject*> GameObjects, float SideLen, 
-        std::vector<std::vector<int>> Grid) : 
+        std::vector<std::vector<int>> Grid, float Time) : 
     player(Player), heldObject(HeldObject), buildingType(BuildingType), 
-    gameObjects(GameObjects), sideLen(SideLen), grid(Grid) 
+    gameObjects(GameObjects), sideLen(SideLen), grid(Grid), time(Time) 
     {
         // assign the grid dimensions with the .size() function
         gridX = grid.size();
@@ -40,8 +40,9 @@ namespace Storage
         // -1 if it doesn't exist
         int idxPlayer = scene.player->idx, 
             idxHeld = (scene.heldObject == nullptr)? -1 : scene.heldObject->idx;
-        // put the indices and building type on one line
-        file << idxPlayer <<'\t'<< idxHeld <<'\t' <<std::hex<<scene.buildingType <<'\n';
+        // put the indices, building type, and time on one line
+        file << idxPlayer <<'\t'<< idxHeld <<'\t' 
+             <<std::hex<<scene.buildingType <<'\t'<< std::dec<<scene.time<<'\n';
 
         // in one line, save the number of gameObjects in the scene.
         // in the next num lines, save all the game objects in the scene
@@ -124,9 +125,12 @@ namespace Storage
         std::istringstream iss(line);
 
 
-        int idxPlayer, idxHeld, buildType; // the three numbers held on this line
+        // the four numbers held on this line
+        int idxPlayer, idxHeld, buildType;
+        float time;
         // take in these values, remember that the building type is stored in hexdec
-        iss >> std::dec>>idxPlayer >> idxHeld >> std::hex>>buildType;
+        iss >> std::dec>>idxPlayer >> idxHeld 
+            >> std::hex>>buildType >>std::dec>>time;
 
 
         // get the next line of the file (should just be one int)
@@ -167,6 +171,7 @@ namespace Storage
                     held->owner = player;
                     player->ownedObjects.push_back(held);
                 }
+
             } else if (id == idxHeld) {
                 // assign obj to the held object pointer
                 held = obj;
@@ -217,7 +222,7 @@ namespace Storage
         }
 
         // create a level object will all the collected attributes
-        Level lvl(player, held, buildType, lvlObjects, sideLen, grid);
+        Level lvl(player, held, buildType, lvlObjects, sideLen, grid, time);
 
         // close the file
         file.close();

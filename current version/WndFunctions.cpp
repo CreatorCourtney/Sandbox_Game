@@ -10,23 +10,6 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
 
     Frame::InitialiseFrameCreation();
 
-    // SetGrid();
-
-    // instantiate the player
-    // Object::Instantiate(Object::Player, Math::Vector2(400.0f, 200.0f), 5);
-    // player = gameObjects[0];
-
-
-    // spawn wolves for testing
-    // for (int i = 0; i < 0; i++) {
-    //     Object::Instantiate(Object::Wolf, Math::Vector2(500.0f, 300.0f), 3);
-    // }
-
-    // spawn items for testing
-    // Object::Instantiate(Object::Pine_Cone_Item, Math::Vector2(700.0f, 300.0f), 13);
-
-    // Object::Instantiate(Object::Log_Item, Math::Vector2(500.0f, 300.0f), 2);
-
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
 
 
@@ -76,9 +59,14 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
             gameObjects[i]->update();
         }
 
+        // update any timed cells
+        updateTimedCells();
+
+        // update the global time
+        g_time += deltaTime;
+
         TranslateMessage(&msg);
         DispatchMessage(&msg);
-        
         // WM_PAINT (in WndProc) occurs every iteration of this loop
     }
 
@@ -94,6 +82,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch (uMsg)
     {
         case WM_CREATE: {
+            // load the world from local storage
             Storage::Level lvl = Storage::LoadLevelObjectFromFile("data/Default Level.txt");
             LoadSceneFromLevelObject(lvl);
 

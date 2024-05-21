@@ -28,10 +28,12 @@ namespace Storage
         int gridX, gridY; // dimensions of grid
         std::vector<std::vector<int>> grid; // 2d array of all cells in the map
 
+        float time; // the time of the level
+
         // constructor
         Level(Object::GameObject *Player, Object::GameObject *HeldObject, int BuildingType,
         std::vector<Object::GameObject*> GameObjects, float SideLen, 
-        std::vector<std::vector<int>> Grid);
+        std::vector<std::vector<int>> Grid, float Time);
     };
 
     // a struct to hold information about the user's settings

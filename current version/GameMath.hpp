@@ -1,10 +1,13 @@
 #ifndef GAME_MATH_HPP
 #define GAME_MATH_HPP
 
-#define PI 3.141592f
-
 #include <ctime>
 #include <cmath>
+
+// mathematican constants
+#define PI 3.141592654f
+#define ROOT2 1.414213562f
+#define SIN45 0.7071067812f
 
 namespace Math 
 {
@@ -40,6 +43,10 @@ namespace Math
         // contructors
         Point2(int X, int Y);
         Point2();
+
+        // overload operators
+        bool operator==(Point2 const& other);
+        bool operator!=(Point2 const& other);
     };
 
     // finds the unit vector pointing from p0 to p1

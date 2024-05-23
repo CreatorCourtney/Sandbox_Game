@@ -22,20 +22,20 @@ byte 2:
 
     13: water by default?
     14: barrier?
-    15: occupied?
+    15: is area occupied by an object (log/tree/sapling etc)?
     16: indestructible by player? 
 
 byte 3:
     17-20 = water corner shorelines
-        ....LRlr, 0010 = bottom left, 0100 = top right
     21-24 = side shorelines
-        lrtb...., 1100 = left&right, 0101 = right&bottom
 
 byte 4:
     25: can be destroyed by enemies
     26: has timer?
     27-32: timer (0-63)
 */
+
+// macros to easily access certain regions of data
 #define EMPTY           0b00000000000000000000000000000000
 #define BARRIER         0b00000000000000000010000000000000
 #define OCCUPIED        0b00000000000000000100000000000000
@@ -43,16 +43,15 @@ byte 4:
 #define INDESTRUBTIBLE  0b00000000000000001000000000000000
 #define CAN_DIE         0b00000001000000000000000000000000
 #define HAS_TIMER       0b00000010000000000000000000000000
+#define TIMER           0b11111100000000000000000000000000
+#define HEALTH          0b00000000000000000000111100000000
 
-// macros to easily access certain regions of data
-#define TIMER    0b11111100000000000000000000000000
-#define HEALTH   0b00000000000000000000111100000000
-
-#define LOG      0b00000001000000000110100000000001 // 8 health
-#define BRIDGE   0b00000001000000000100001100000010 // 3 health
-#define TREE     0b00000000000000000110000000000011 // not destructible
-#define STUMP    0b00000001000000000110100000000100 // 8 health
-#define SAPLING  0b00000001000000000110001000000101 // 2 health
+//Object Definitions (for cell data)
+#define LOG             0b00000001000000000110100000000001 // 8 health
+#define BRIDGE          0b00000001000000000100001100000010 // 3 health
+#define TREE            0b00000000000000000110000000000011 // not destructible
+#define STUMP           0b00000001000000000110100000000100 // 8 health
+#define SAPLING         0b00000001000000000110001000000101 // 2 health
 
 
 namespace Object
@@ -73,7 +72,7 @@ namespace Object
     class Animations {
     public:
         // sets of images, all of the images in one vector 
-        // will be shows sequentially to play an animation
+        // will be shown sequentially to play an animation
         std::vector<Gdiplus::TextureBrush*> front;
         std::vector<Gdiplus::TextureBrush*> back;
         std::vector<Gdiplus::TextureBrush*> left;

@@ -10,22 +10,38 @@
 
 #include "GameMath.hpp"
 #include "GameObjects.hpp"
-#include "Inventory.hpp"
+#include "Storage.hpp"
 // had to include here to avoid compiler issues, NOT included in GameObjects.hpp
 #include "EntityFunctions.hpp"
 #include "Collisions.hpp"
 
 namespace Globals {
     float g_scale = 1.0f;
+
     int wndWidth, wndHeight;
     int bkgWidth, bkgHeight;
     Gdiplus::Rect viewRect(0, 0, 900, 600);
     HDC hOffscreenDC, g_hdc;
     HBITMAP hOffscreenBitmap;
     clock_t begin_time = clock();
+
+    float g_time = 0.0f; // the current time in game, saved as a float
+
     float deltaTime = 0.0f;
     int prevFPS = 0;
     bool gameIsPaused = 0;
+
+    int interactRangeCells = 3; // player can only interact with things within X cells
+    float interactRange = 0.0f; // actual interaction distance
+
+    // how frequently the sapling timer gets updated
+    int saplingTime = 1;
+
+
+    // the position of the player's mouse on the screen
+    Math::Point2 mousePos(0, 0); 
+    // relative position of the player's mouse in the world
+    Math::Vector2 mousePosREAL(0.0f, 0.0f);
 
     unsigned char debuggingTools = 4; // . . . . . hitboxes, speed, showInfo
     unsigned char inputKeys = 0; // 000Swasd
@@ -52,34 +68,59 @@ namespace Globals {
     Gdiplus::TextureBrush * overlayBrush;
 
     Gdiplus::Image *logImg, *bridgeImg, *waterImg, *emptyImg, *hotbarImg, *treeImg, *wolfImg,
-    *falling_treeImg, *stumpImg;
+    *falling_treeImg, *stumpImg, *Pine_ConeImg, *saplingImg;
     Gdiplus::TextureBrush *logBrush, *bridgeBrush, *waterBrush, *grassBrush, *hotbarBrush, *treeBrush,
-    *wolfBrush, *falling_treeBrush, *stumpBrush;
+    *wolfBrush, *falling_treeBrush, *stumpBrush, *Pine_ConeBrush, *saplingBrush;
 
     Object::Animations playerAnimations;
-    
-    Inventory::HotbarSlot * hotbarButtons[6];
 
-    Math::Vector2 wndScale;
-    float UIScale = 1.0f, currUIScale;
 
     Object::GameObject * player;
+    // object the player is holding
+    Object::GameObject * heldObject = nullptr;
+    // type of object player tries to put in a cell
+    int buildingType = EMPTY;
+
+
+    // a vector containing all cells with time dependent functions (such as saplings)
+    std::vector<Math::Point2> timedCells;
+    // a vector containing pointers to all game objects
     std::vector<Object::GameObject*> gameObjects;
     int numObjectsinOverlay = 0;
-    CellObject selectedObj = LOG;
 
-    Gdiplus::Bitmap * createEmptyBitmap(int width, int height);
 
-    float sideLen;
-    std::vector<std::vector<CellObject>> grid;
+    float sideLen = 52.0f;
+    std::vector<std::vector<int>> grid;
 
     int treeHeight = 10, treeWidth = 3; // dimensions of trees (in grid cells)
 
     // text colours
     Gdiplus::Color white(255,255,255), red(255,0,0), green(0,255,0), blue(0,0,255), black(0,0,0);
 
+
+    Gdiplus::Bitmap * createEmptyBitmap(int width, int height);
     int LoadImages();
     void SetGrid();
+
+
+    // finds the index of a point in a vector of points,
+    // returns -1 if the point is not in the vector
+    int findPointIndexInVector(Math::Point2 p, std::vector<Math::Point2> vec);
+
+    // updates all the cells with time elements (like sapling growth)
+    void updateTimedCells();
+
+
+    // for loading/unloading a scene
+    // loads the attributes of a level object into the global variables
+    void LoadSceneFromLevelObject(Storage::Level level);
+    // stores the global variables into a level object
+    Storage::Level SaveSceneToLevelObject();
+
+    // loads the user's settings into global variables
+    void LoadUserSettingsToObject(Storage::UserSettings settings);
+    // saves settings globals into a UserSettings object
+    Storage::UserSettings saveUserSettingsToObject();
 }
 
 #endif

@@ -4,9 +4,10 @@
 #include "Globals.cpp"
 #include "GameObjects.cpp"
 #include "GameMath.cpp"
-#include "Inventory.cpp"
 #include "Collisions.cpp"
 #include "EntityFunctions.cpp"
+#include "PlayerInput.cpp"
+#include "Storage.cpp"
 
 // open the exe
 int main() {

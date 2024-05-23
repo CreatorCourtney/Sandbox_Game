@@ -22,18 +22,12 @@ namespace Func
         // normalise the vector so that players can't walk faster by moving diagonally
         p->velocity.normalise(); 
         p->velocity = p->velocity*s; // multiply the unit vector by movement speed
-
-        // update the direction you're facing based on velocity
-        if (p->velocity.y > 0.0f) p->animations.facing = 0;
-        else if (p->velocity.y < 0.0f) p->animations.facing = 1;
-        else if (p->velocity.x > 0.0f) p->animations.facing = 3;
-        else if (p->velocity.x < 0.0f) p->animations.facing = 2;
-        else p->animations.stage = 0.0f;
     }
 
 
     // gives wolf velocity in the direction of the player
-    void wolfVelocityFunc(Object::GameObject *w) {
+    void wolfVelocityFunc(Object::GameObject *w) 
+    {
         // a unit vector from the wolf's position to the player's position
         Math::Vector2 dir = Math::getUnitVector(w->centrePos, player->centrePos);
         // moves in the direction of the unit vector, with a magnitude equal to it's speed
@@ -41,8 +35,10 @@ namespace Func
     }
 
 
-    // objects with zero velocity do nothing when updating
-    void zeroVelocityFunc(Object::GameObject *t) {}
+    // adds object's acceleration to their velocity
+    void defaultVelocityFunc(Object::GameObject *o) {
+        o->velocity = o->velocity + (o->acceleration * deltaTime);
+    }
 
 
     // position functions
@@ -61,12 +57,80 @@ namespace Func
     // moves the base of the falling tree to remain in place as the tree gets rotated
     void fallingTreePositionFunc(Object::GameObject *t)
     {
-        // when hp is <= 0, the time has passed
-        if (t->hp <= 0.0f) {
-            // remove the object
+        // when the timer reaches 0, destroy the object
+        if (t->timer <= 0.0f) 
+        {
+            // once the tree is gone, spawn some log + pine cone items in where it fell
+            // the further log will be the height of the tree (size.x) to the LEFT of pos,
+            // the nearest one could be at pos
+
+            // 5 wood will spawn, 0-2 seeds will spawn
+            int seeds = rand()%3, n = seeds+5;
+            
+            // step between each item object, and the y position of each object
+            float step = t->size.x / n, y = t->pos.y + t->size.y;
+
+            // spawn n items
+            for (int i = 1; i <= n; i++)
+            {
+                Math::Vector2 pos(t->pos.x - step*i, y);
+                // spawn logs first, seeds last
+                Object::EntityType item = (i<6)? Object::Log_Item : Object::Pine_Cone_Item;
+                Object::spawnItemStack(item, pos, 1);
+            }
+
+            // destroy the falling tree object
             Object::Destroy(t);
         }
     }
+
+
+    // holds the item stack a constant distance away from the player's centre
+    void heldItemPositionFunc(Object::GameObject *item)
+    {
+        // get a unit vector from the player's centre to the mouse position's centre
+        Math::Vector2 dir = Math::getUnitVector(player->centrePos, mousePosREAL);
+
+        // place the item a fixed distance from the player's centre, in the direction of the mouse
+        float r = player->radius + item->radius + 5.0f;
+        item->centrePos = player->centrePos + (dir * r);
+
+        // update the 'pos' member
+        item->pos = item->centrePos - Math::Vector2(item->size.x/2, item->size.y/2);
+    }
+
+    // adds velocity to the position. when the velocity reaches zero, set acceleration to zero.
+    void thrownItemPositionFunc(Object::GameObject *item)
+    {
+        // velocity is the derivative of position; add velocity to the current position every frame
+        // multiply the velocity by deltaTime, first, to normalise the movement speed
+        item->pos = item->pos + (item->velocity * deltaTime);
+        // update the centre position, which is in the centre of the object's hitbox
+        item->centrePos = item->pos + Math::Vector2(item->size.x/2, item->size.y/2);
+
+        /*
+            when two vectors point in the same direction, their dot product is positive.
+            when pointing in different (non orthogonal) directions, it is negative
+
+            while the acceleration is pointing opposite the velocity, the entity is slowing down
+            if the dot product of the acceleration and velocity is positive, the entity has
+            already stopped, and is now speeding up. 
+
+            to stop this, cancel the acceleration once the dot product is non-negative
+        */
+        
+        // dot product is non-negative
+        if (item->velocity * item->acceleration >= 0.0f)
+        {
+            // set velocity and acceleration both to zero 
+            item->velocity = item->acceleration = Math::Zero2;
+            // set the item's position function to default, to avoid
+            // making this check every frame
+            item->positionFunc = defaultPositionFunc;
+        }
+    }
+
+
 
 
 
@@ -84,8 +148,20 @@ namespace Func
         // image in the vector. otherwise, use the index to choose an image.
         // also increment the stage by adding deltaTime to it
 
-        Gdiplus::TextureBrush *res;
 
+        // update the direction you're facing based on direction to the mouse
+        Math::Vector2 dir = Math::getUnitVector(p->centrePos, mousePosREAL);
+
+        if (dir.x > SIN45) p->animations.facing = 3; // looking right
+        else if (dir.x < -SIN45) p->animations.facing = 2; // looking right
+        else if (dir.y <= -SIN45) p->animations.facing = 1; // looking backwards
+        else p->animations.facing = 0; // looking forwards
+
+        // when not moving, keep the animation stage at 0
+        if (p->velocity == Math::Zero2) p->animations.stage = 0.0f;
+
+
+        Gdiplus::TextureBrush *res;
         switch (p->animations.facing)
         {
             case 0: { // forwards
@@ -131,9 +207,8 @@ namespace Func
 
         // find the displacement in x and y of the bottom left of the image to the base of the tree once rotated
 
-        // the object is spawned with 1.0 hp, which is decremented with time,
-        // use the object's hp as the interpolator
-        float interp = 1.0 - t->hp;
+        // timer is initialised to 1.0f, use it as an interpolator
+        float interp = 1.0 - (t->timer/1.0f);
 
 
         /*
@@ -144,24 +219,35 @@ namespace Func
 
             it's unfortunate this uses TWO trig functions evrery frame... if someone could figure out how to do this with 
             vector arithmetic that would be so cool B)
+
+            *this doesn't fix the fact that trig functions are used, but recall that 
+            sin(theta) = sqrt(1 - cos(theta)), which can be used to avoid calculating ONE trig function
         */
 
 
         // alpha = angle in degrees (for actual rotation), 
         // theta = angle in radians (for calculations). r = height of the tree
         float alpha = -100.0f * interp, theta = (PI*0.5555556f) * interp, r = t->size.y;
-        // distance the corner of the object is from its original position
-        float dx = r*sinf(theta), dy = r*(1-cosf(theta));
+
+        // recall that sin = sqrt(1 - cos^2)
+        float cosTheta = cosf(theta), sinTheta = sqrt(1.0f - cosTheta*cosTheta);
+
+        // distance the corner of the object is from its original position (dx, dy)
+        float dx = r*sinTheta, dy = r*(1-cosTheta);
 
         // adjust the area the brush is being drawn along the x axis, since otherwise the image would rotate OUT of the drawing
         // rectangle. This isn't necesary along the y axis, though. just add the y displacement to the tranform matrix
+
+        // brush->SetWrapMode(Gdiplus::WrapModeTile);
+        // t->setBrushMatrix(brush, Math::Point2(screenPos->x, screenPos->y+t->size.y));
+
         screenPos->x -= dx;
         t->setBrushMatrix(brush, Math::Point2(screenPos->x, screenPos->y+dy));
 
         // rotate the image to mimic the tree falling
         brush->RotateTransform(alpha);
 
-        t->hp -= deltaTime; // decrease the object's hp
+        t->timer -= deltaTime; // decrease the object's hp
 
         return brush;
     }

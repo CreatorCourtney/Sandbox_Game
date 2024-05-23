@@ -81,6 +81,17 @@ namespace Math
     // make x and y both 0 by default
     Point2::Point2() : x(0), y(0) {}
 
+
+    // overload operators
+    bool Point2::operator==(Point2 const& other) {
+        return x==other.x && y==other.y;
+    }
+    bool Point2::operator!=(Point2 const& other) {
+        return x!=other.x || y!=other.y;
+    }
+
+
+
     // gets unit vector from p0 to p1
     Vector2 getUnitVector(Vector2 p0, Vector2 p1)
     {
@@ -112,6 +123,9 @@ namespace Math
     }
     int Max(int a, int b) { // max for ints
         return (a>b)? a : b;
+    }
+    int Min(int a, int b) { // min for ints
+        return (a<b)? a : b;
     }
 
     float absf(float a) { // abs for ints

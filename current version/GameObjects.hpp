@@ -13,31 +13,45 @@
 
 // cell types
 /* BYTE DECOMPOSITION:
+
 byte 1:
     1-8 = cell info (wall type, etc)
+
 byte 2:
-9-12 = ...
-13: water by default?
-14: barrier?
-15: occupied?
-16: indestructible? 
-byte3:
-17-20 = water corner shorelines
-    ....LRlr, 0010 = bottom left, 0100 = top right
-21-24 = side shorelines
-    lrtb...., 1100 = left&right, 0101 = right&bottom
+    9-12 = building hp (0-15)
+
+    13: water by default?
+    14: barrier?
+    15: is area occupied by an object (log/tree/sapling etc)?
+    16: indestructible by player? 
+
+byte 3:
+    17-20 = water corner shorelines
+    21-24 = side shorelines
+
+byte 4:
+    25: can be destroyed by enemies
+    26: has timer?
+    27-32: timer (0-63)
 */
-#define EMPTY    0b0000000000000000
-#define BARRIER  0b0010000000000000
-#define OCCUPIED 0b0100000000000000
-#define WATER    0b0001000000000000
 
-#define LOG      0b0110000000000001
-#define BRIDGE   0b0100000000000010
-#define TREE     0b0110000000000011
-#define STUMP    0b0110000000000100
+// macros to easily access certain regions of data
+#define EMPTY           0b00000000000000000000000000000000
+#define BARRIER         0b00000000000000000010000000000000
+#define OCCUPIED        0b00000000000000000100000000000000
+#define WATER           0b00000000000000000001000000000000
+#define INDESTRUBTIBLE  0b00000000000000001000000000000000
+#define CAN_DIE         0b00000001000000000000000000000000
+#define HAS_TIMER       0b00000010000000000000000000000000
+#define TIMER           0b11111100000000000000000000000000
+#define HEALTH          0b00000000000000000000111100000000
 
-typedef int CellObject;
+//Object Definitions (for cell data)
+#define LOG             0b00000001000000000110100000000001 // 8 health
+#define BRIDGE          0b00000001000000000100001100000010 // 3 health
+#define TREE            0b00000000000000000110000000000011 // not destructible
+#define STUMP           0b00000001000000000110100000000100 // 8 health
+#define SAPLING         0b00000001000000000110001000000101 // 2 health
 
 
 namespace Object
@@ -47,14 +61,18 @@ namespace Object
     {
         Player, // 0
         Wolf,    // 1
-        Falling_Tree // 2
+        Falling_Tree, // 2
+
+        // item stack entities
+        Log_Item, // 3
+        Pine_Cone_Item // 4
     };
 
     // object to store images for game object animation
     class Animations {
     public:
         // sets of images, all of the images in one vector 
-        // will be shows sequentially to play an animation
+        // will be shown sequentially to play an animation
         std::vector<Gdiplus::TextureBrush*> front;
         std::vector<Gdiplus::TextureBrush*> back;
         std::vector<Gdiplus::TextureBrush*> left;
@@ -86,24 +104,30 @@ namespace Object
     public:
         // position of the top left corner of the hitbox
         Math::Vector2 pos;
-        // size of the hitbox
-        Math::Point2 size;
         // position of the centre of the hitbox
         Math::Vector2 centrePos;
-        Math::Point2 cell; // the cell the object lies in
-
         // object's velocity and acceleration
         Math::Vector2 velocity;
         Math::Vector2 acceleration;
+        
+
+        Math::Point2 size; // size of the hitbox
+        Math::Point2 cell; // the cell the object lies in
 
         EntityType type; // which type of entity it is
         Animations animations; // images used for animating
         Gdiplus::TextureBrush* brush; // if the entity has no animations, this constant brush is used for drawing
         
+
+        // for managing associated entities
+        GameObject* owner = nullptr;
+        std::vector<GameObject*> ownedObjects; 
+
         
-        float hp; // object's health
+        int hp, maxHP; // object's health/health cap
         float speed; // scalar movement speed
         int idx; // index of the object in the gameObjects vector
+        float timer = 0.0f; // for obects with mechanics dependent on time
 
 
         bool hasCollision;
@@ -115,8 +139,7 @@ namespace Object
 
 
         // constructor
-        GameObject(Math::Vector2 Pos, Math::Vector2 Velocity,
-            EntityType Type, Math::Point2 Size, float Speed, float Hp);
+        GameObject(Math::Vector2 Pos, Math::Vector2 Velocity, EntityType Type, int Hp, int Idx);
 
 
         // calls the behaviour functions, updating member variables
@@ -131,13 +154,18 @@ namespace Object
         void setBrushMatrix(Gdiplus::TextureBrush *b, Math::Point2 disp);
 
 
-    private:
         // what should happen when updating the entity's velocity
         void (*velocityFunc)(GameObject*);
         // what should happen when updating the entity's position
         void (*positionFunc)(GameObject*);
         // collision behaviour
         void (*collisionFunc)(GameObject*);
+
+
+        // cleanup function
+        void deallocateResources();
+
+    private:
         
         // developer tool, draws the collision boundaries for the game object
         void DrawHitbox(Gdiplus::Graphics& graphics, int dotSize, Math::Point2 screenPos);
@@ -150,11 +178,12 @@ namespace Object
         // choses one image from the animations object that will be drawn to the screen
         Gdiplus::TextureBrush* (*animationScript)(GameObject*, Math::Point2*);
         
-        bool hasAnimation = true; 
-        
-        Math::Point2 brushScale; // sclae for image drawing purposes
+        bool hasAnimation = false;
+        Gdiplus::Matrix *brushScaleMatrix; // scale for image drawing purposes
         Math::Point2 srcDimensions; // dimensions (in pixels) of the image file
     };
+
+
 
     // finds the cell coordinates of a position in world space
     Math::Point2 findCell(Math::Vector2 pos);
@@ -166,12 +195,15 @@ namespace Object
 
 
 
-    // for instantiating game objects
-    void Instantiate(EntityType type, Math::Vector2 pos, Math::Point2 size,
-        float speed, float hp);
+    // for instantiating game objects. returns a reference to the object created
+    GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp);
 
     // deletes the specified object
     void Destroy(GameObject * obj);
+
+    
+    // spawns an item stack with random velocity. return a reference to the item created
+    GameObject* spawnItemStack(EntityType type, Math::Vector2 pos, int count);
 }
 
 #endif

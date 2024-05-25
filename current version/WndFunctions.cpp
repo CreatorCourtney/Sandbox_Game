@@ -67,6 +67,7 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
 
         TranslateMessage(&msg);
         DispatchMessage(&msg);
+
         // WM_PAINT (in WndProc) occurs every iteration of this loop
     }
 
@@ -94,6 +95,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
 
         case WM_SIZE: {
+            // update global window dimensions
             int newWidth = LOWORD(lParam), newHeight = HIWORD(lParam);
             wndWidth = newWidth; wndHeight = newHeight;
 
@@ -248,7 +250,8 @@ void DestroyAllResources(HWND hwnd)
     delete logImg; delete bridgeImg; delete waterImg; delete emptyImg;
     delete hotbarImg; delete treeImg; delete wolfImg; 
     delete falling_treeImg; delete stumpImg; delete Pine_ConeImg;
-    delete saplingImg;
+    delete saplingImg; delete shoreline0Img; delete shoreline1Img;
+    delete shoreline2Img; delete shoreline3Img; delete shoreline4Img;
 
     delete overlay; delete background;
 
@@ -256,7 +259,8 @@ void DestroyAllResources(HWND hwnd)
     delete logBrush; delete bridgeBrush; delete waterBrush; delete grassBrush;
     delete hotbarBrush; delete treeBrush; delete wolfBrush;
     delete falling_treeBrush; delete stumpBrush; delete Pine_ConeBrush;
-    delete saplingBrush;
+    delete saplingBrush; delete shoreline0Brush; delete shoreline1Brush;
+    delete shoreline2Brush; delete shoreline3Brush; delete shoreline4Brush;
 
     delete bkgBrush; delete overlayBrush;
 

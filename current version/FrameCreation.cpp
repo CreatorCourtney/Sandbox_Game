@@ -212,6 +212,606 @@ namespace Frame
         graphics.DrawImage(img, x, y, srcX, srcY, srcWidth, srcHeight, Gdiplus::UnitPixel);
     }
 
+
+    // fills a cell with the water image, as well as any shoreline
+    /*
+        this function works and is reasonably fast, but the code is so, SO hideous, please
+        do not read this lest i be embarrased
+    */
+    void DrawWaterToCell(Math::Point2 cell, int x, int y)
+    {
+        // ensure the cell is actually water
+        if (!(grid[cell.x][cell.y]&WATER)) return;
+
+        // draw the base water image to the cell
+        DrawImageToBitmap(background, waterImg, x, y);
+
+        // sample the four adjacent cells to see where shoreline should be drawn
+
+        unsigned char shoreLocations = 0b00000000; // lrLR TBLR
+        /*
+            METHOD:
+            
+            the eight bits of shoreLocations represent the following:
+
+            1: there is a shoreline on the RIGHT side of the cell
+            2: there is a shoreline on the LEFT side of the cell
+            3: there is a shoreline on the TOP of the cell
+            4: there is a shoreline on the BOTTOM of the cell
+
+            5: there is shore in the BOTTOM RIGHT corner of the cell
+            6: there is shore in the BOTTOM LEFT corner of the cell
+            7: there is shore in the TOP RIGHT corner of the cell
+            8: there is shore in the TOP LEFT corner of the cell
+
+            run checks on the surrounding cells to see where there is and isn't land, in order to determine
+            where there should and shouldn't be shore, setting these bits
+
+            once shoreLocations is created, run a switch statement to determine which shoreline types
+            should be drawn, and where
+        */
+        // dimensions of grid - 1
+        int nx = grid.size()-1, ny = (nx)? grid[0].size()-1 : 0;
+
+        // check the cell to the right, x+1. if x>=grid.size(), don't do anything, assume there is no shoreline
+        if (cell.x < nx) {
+            // if the cell to the right is NOT water, set bit 1;
+            if (!(grid[cell.x + 1][cell.y]&WATER)) shoreLocations |= 1;
+            else {
+                // if applicable, set the right corner bits
+                if (cell.y<ny) { // bottom right
+                    if (!(grid[cell.x+1][cell.y+1]&WATER)) shoreLocations |= 0x10;
+                }
+                if (cell.y>0) { // top right
+                    if (!(grid[cell.x+1][cell.y-1]&WATER)) shoreLocations |= 0x40;
+                }
+            }
+        }
+
+        // check the cell to the left, x-1. if x <= 0, don't do anything, assume there is no shoreline
+        if (cell.x > 0) {
+            // if the cell to the left is NOT water, set bit 2
+            if (!(grid[cell.x - 1][cell.y]&WATER)) shoreLocations |= 2;
+            else {
+                // if applicable, set the left corner bits
+                if (cell.y<ny) { // bottom left
+                    if (!(grid[cell.x-1][cell.y+1]&WATER)) shoreLocations |= 0x20;
+                }
+                if (cell.y>0) { // top left
+                    if (!(grid[cell.x-1][cell.y-1]&WATER)) shoreLocations |= 0x80;
+                }
+            }
+        }
+
+        // check the cell above, y-1. if y <= 0, don't do anything, assume there is no shoreline
+        if (cell.y > 0) {
+            // if the cell above is NOT water, set bit 3
+            if (!(grid[cell.x][cell.y - 1]&WATER)) {
+                shoreLocations |= 4;
+                // reset top corners, in case they were set
+                shoreLocations &= ~0xC0;
+            }
+            else {
+                // if applicable, set the top corner bits
+                if (cell.x<ny) { // top right
+                    if (!(grid[cell.x+1][cell.y-1]&WATER) && !(shoreLocations&1)) 
+                        shoreLocations |= 0x40;
+                }
+                if (cell.x>0) { // top left
+                    if (!(grid[cell.x-1][cell.y-1]&WATER) && !(shoreLocations&2)) 
+                        shoreLocations |= 0x80;
+                }
+            }
+        }
+
+        // check the cell below, y+1. if y>=grid[0].size(), don't do anything, assume there is no shoreline
+        if (cell.y < ny) {
+            // if the cell below is NOT water, set bit 4
+            if (!(grid[cell.x][cell.y + 1]&WATER)) {
+                shoreLocations |= 8;
+                // reset bottom corners, in case they were set
+                shoreLocations &= ~0x30;
+            }
+            else {
+                // if applicable, set the bottom corner bits
+                if (cell.x<ny) { // bottom right
+                    if (!(grid[cell.x+1][cell.y+1]&WATER) && !(shoreLocations&1)) 
+                        shoreLocations |= 0x10;
+                }
+                if (cell.x>0) { // bottom left
+                    if (!(grid[cell.x-1][cell.y+1]&WATER) && !(shoreLocations&2)) 
+                        shoreLocations |= 0x20;
+                }
+            }
+        }
+
+        // now, based off shore locations, draw the shorelines
+        switch (shoreLocations)
+        {
+            case 0: // no shorelines, do nothing
+                break;
+
+            case 1: // only shore on the right
+                // rotate shoreline0 then draw it
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline0Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                break;
+
+            case 2: // only shore on the left
+                // rotate shoreline 0 then draw it
+                shoreline0Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 3: // shore on left and right
+                // rotate shoreline0 then draw it
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // rotate again for the left side
+                shoreline0Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 4: // only shore on top
+                // no rotation necesary
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                break;
+
+            case 5: // shore on top and right
+                // rotate shoreline 1 then draw it
+                shoreline1Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline1Img, x, y);
+                // reset transform
+                shoreline1Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                break;
+
+            case 6: // shore on top and left
+                // no rotation necesary
+                DrawImageToBitmap(background, shoreline1Img, x, y);
+                break;
+
+            case 7: // shore on top left and right
+                // no rotation necesary
+                DrawImageToBitmap(background, shoreline2Img, x, y);
+                break;
+
+            case 8: // shore on bottom
+                // flip shoreline 0 then draw it
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+
+            case 9: // shore on bottom and right
+                // rotate shoreline 1 then draw it
+                shoreline1Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline1Img, x, y);
+                // reset transform
+                shoreline1Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 10: // shore on bottom and left
+                // flip shoreline 1 then draw it
+                shoreline1Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline1Img, x, y);
+                // reset transform
+                shoreline1Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+
+            case 11: // shore on bottom left and right
+                // flip shoreline 2 then draw it
+                shoreline2Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline2Img, x, y);
+                // reset transform
+                shoreline2Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+
+            case 12: // shore on top and bottom
+                // draw top, no transformation necesary
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // flip shoreline 0 then draw it
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+
+            case 13: // shore on top, bottom and right
+                // rotate shoreline 2 then draw it
+                shoreline2Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline2Img, x, y);
+                // reset transform
+                shoreline2Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                break;
+
+            case 14: // shore on top, bottom, and left
+                // rotate shoreline 2 then draw it
+                shoreline2Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                DrawImageToBitmap(background, shoreline2Img, x, y);
+                // reset transform
+                shoreline2Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 15: // shore on all four sides
+                // draw shoreline 3
+                DrawImageToBitmap(background, shoreline3Img, x, y);
+                break;
+
+            case 16: // only bottom right corner
+                // rotate shoreline 4 then draw it
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 17: // should never occur
+                break;
+
+            case 18: // bottom right corner, left shore
+                // rotate shore 0 and 4
+                shoreline0Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                // draw the shores
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transforms
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 19: // should never occur
+                break;
+
+            case 20: // bottom right corner, top side
+                // rotate shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                // draw the shores
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 21: // should never occur
+                break;
+
+            case 22: // bottom right corner, top and left side
+                // rotate shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                // draw the shores
+                DrawImageToBitmap(background, shoreline1Img, x, y);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 23: break; // should never occur
+
+            case 24: break; // should never occur
+
+            // jump to case 32
+            case 32: // only bottom left corner
+                // rotate shoreline 4 then draw it
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                break;
+
+            case 0x21: // bottom left corner, right side
+                // rotate shore 0 and 4
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                // draw the shores
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transforms
+                shoreline0Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x22: break;
+
+            case 0x23: break;
+
+            case 0x24: // bottom left corner, top side
+                // rotate shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                // draw the shores
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x25: // bottom left corner, top and right sides
+                // rotate shores 1 and 4
+                shoreline1Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                // draw the shores
+                DrawImageToBitmap(background, shoreline1Img, x, y);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transforms
+                shoreline1Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x26: break;
+
+            case 0x30: // bottom left and right corners
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x34: // bottom corners top side
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // draw shore 0
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x40: // just top right
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                break;
+
+            case 0x42: // top right, left side
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 0
+                shoreline0Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x48: // top right, bottom side
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // flip and draw shore 0
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+
+            case 0x4A: // top right, bottom and left
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // flip and draw shore 1
+                shoreline1Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline1Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                shoreline1Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+
+            case 0x50: // right corners
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 0x52: // right corners, left side
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 0
+                shoreline0Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x60: // top right and bottom left corners
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x70: // bottom and right corners
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0x80: // top left corner
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                break;
+
+            case 0x81: // top left, right side
+                // rotate shore 0
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                // draw shores
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline0Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                break;
+
+            case 0x88: // top left, bottom side
+                // flip shore 0
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                // draw shores
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+
+            case 0x89: // top left, bottom and right sides
+                // rotate shore 1
+                shoreline1Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                // draw shores
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                DrawImageToBitmap(background, shoreline1Img, x, y);
+                // reset transform
+                shoreline1Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 0x90: // top left and bottom right
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 0xA0: // left corners
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0xA1: // left corners, right side
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 0
+                shoreline0Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                shoreline0Img->RotateFlip(Gdiplus::Rotate270FlipNone);
+                break;
+
+            case 0xB0: // top left, bottom right, bottom left
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0xC0: // top corners
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // flip and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+
+            case 0xC8: // top corners, bottom side
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // flip and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // flip and draw shore 0
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                DrawImageToBitmap(background, shoreline0Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                shoreline0Img->RotateFlip(Gdiplus::RotateNoneFlipY);
+                break;
+            
+            case 0xD0: // top corners, bottom right
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                break;
+
+            case 0xE0: // top corners, bottom left
+                // draw shore 4
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // rotate and draw shore 4
+                shoreline4Img->RotateFlip(Gdiplus::Rotate180FlipNone);
+                DrawImageToBitmap(background, shoreline4Img, x, y);
+                // reset transform
+                shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                break;
+
+            case 0xF0: // all corners
+                // draw and rotate four timed
+                for (int i = 0; i < 4; i++) {
+                    DrawImageToBitmap(background, shoreline4Img, x, y);
+                    shoreline4Img->RotateFlip(Gdiplus::Rotate90FlipNone);
+                }
+                break;
+
+            default: 
+                std::cout << std::hex<<(int)shoreLocations <<'\n';
+                break;
+        }  
+    }
+
+
     // draws every cell onto the background image, and every tree onto the overlay
     void DrawWholeGrid()
     {

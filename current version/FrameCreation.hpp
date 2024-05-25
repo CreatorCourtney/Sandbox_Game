@@ -37,7 +37,9 @@ namespace Frame
     void DrawImageToBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Image* img, int x, int y);
     // draws a region of an image onto the bitmap
     void DrawImageToBitmap(Gdiplus::Bitmap* bitmap, Gdiplus::Image* img, int x, int y, int srcX, int srcY, int srcWidth, int srcHeight);
-    
+    // fills a cell with the water image, as well as any shoreline
+    void DrawWaterToCell(Math::Point2 cell, int x, int y);
+
     // draws a tree image onto the overay image. this is done to avoid drawing all the 
     // trees to the frame individually, which dramatically improves performance
     void AddTreeToOverlay(Math::Point2 cell, bool updateOverlayBrush);

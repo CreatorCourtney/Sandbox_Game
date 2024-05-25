@@ -1,11 +1,9 @@
-#ifndef GLOBALS
-#define GLOBALS
-
 #include "Globals.hpp"
 
 namespace Globals 
 {
-    int LoadImages() {
+    int LoadImages() 
+    {
         logImg = Gdiplus::Image::FromFile(L"images/Log.png");
         if (logImg->GetLastStatus() != Gdiplus::Ok) return 2;
         logBrush = new Gdiplus::TextureBrush(logImg);
@@ -16,12 +14,12 @@ namespace Globals
         bridgeBrush = new Gdiplus::TextureBrush(bridgeImg);
         bridgeBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
-        waterImg = Gdiplus::Image::FromFile(L"images/Water.png");
+        waterImg = Gdiplus::Image::FromFile(L"images/Ground/Water.png");
         if (waterImg->GetLastStatus() != Gdiplus::Ok) return 2;
         waterBrush = new Gdiplus::TextureBrush(waterImg);
         waterBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
-        emptyImg = Gdiplus::Image::FromFile(L"images/EmptyTile.png");
+        emptyImg = Gdiplus::Image::FromFile(L"images/Ground/Grass.png");
         if (emptyImg->GetLastStatus() != Gdiplus::Ok) return 2;
         grassBrush = new Gdiplus::TextureBrush(emptyImg);
         grassBrush->SetWrapMode(Gdiplus::WrapModeClamp);
@@ -60,6 +58,31 @@ namespace Globals
         if (saplingImg->GetLastStatus() != Gdiplus::Ok) return 2;
         saplingBrush = new Gdiplus::TextureBrush(saplingImg);
         saplingBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        shoreline0Img = Gdiplus::Image::FromFile(L"images/Ground/Shoreline0.png");
+        if (shoreline0Img->GetLastStatus() != Gdiplus::Ok) return 2;
+        shoreline0Brush = new Gdiplus::TextureBrush(shoreline0Img);
+        shoreline0Brush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        shoreline1Img = Gdiplus::Image::FromFile(L"images/Ground/Shoreline1.png");
+        if (shoreline1Img->GetLastStatus() != Gdiplus::Ok) return 2;
+        shoreline1Brush = new Gdiplus::TextureBrush(shoreline1Img);
+        shoreline1Brush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        shoreline2Img = Gdiplus::Image::FromFile(L"images/Ground/Shoreline2.png");
+        if (shoreline2Img->GetLastStatus() != Gdiplus::Ok) return 2;
+        shoreline2Brush = new Gdiplus::TextureBrush(shoreline2Img);
+        shoreline2Brush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        shoreline3Img = Gdiplus::Image::FromFile(L"images/Ground/Shoreline3.png");
+        if (shoreline3Img->GetLastStatus() != Gdiplus::Ok) return 2;
+        shoreline3Brush = new Gdiplus::TextureBrush(shoreline3Img);
+        shoreline3Brush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        shoreline4Img = Gdiplus::Image::FromFile(L"images/Ground/Shoreline4.png");
+        if (shoreline4Img->GetLastStatus() != Gdiplus::Ok) return 2;
+        shoreline4Brush = new Gdiplus::TextureBrush(shoreline4Img);
+        shoreline4Brush->SetWrapMode(Gdiplus::WrapModeClamp);
 
         // load player animations
         {
@@ -151,7 +174,7 @@ namespace Globals
             Math::Point2 cell = timedCells[i];
             int cellInfo = grid[cell.x][cell.y];
 
-            // the timer bits of cellInfo as a regular int
+            // get the timer bits of cellInfo as a regular int
             int currTimer = (cellInfo&TIMER)>>26;
 
             switch (cellInfo & 255) // just the first byte (cell's ID)
@@ -159,8 +182,11 @@ namespace Globals
                 case 5: // sapling
 
                     // growth condition met
-                    if (((int)g_time%saplingTime)==0) {
-                        // ensure this only happens when the time is close to an integer
+                    if (((int)g_time%saplingTime)==0) 
+                    {
+                        // because the exact amount of time passed won't always be an exact integer,
+                        // currTimer will be incremented when g_time is close ENOUGH to an integer
+                        
                         // d = amount of time from last INTEGER
                         float d = g_time - (int)g_time;
 
@@ -168,8 +194,9 @@ namespace Globals
                             currTimer++; // increment the time when successful
                     }
 
-                    // all timer bits have been enabled
-                    if (currTimer >= 10) {
+                    
+                    if (currTimer >= 10) 
+                    {
                         // when the sapling grows, a tree will be placed in the cell
                         Input::PlaceObjectInCell(cell, TREE);
 
@@ -188,6 +215,7 @@ namespace Globals
             cellInfo &= ~TIMER;
             // set the timer bits with currTimer
             cellInfo |= currTimer;
+
             // update the actual grid
             grid[cell.x][cell.y] = cellInfo;
         }
@@ -248,5 +276,3 @@ namespace Globals
         return settings;
     }
 }
-
-#endif

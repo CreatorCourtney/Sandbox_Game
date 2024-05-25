@@ -12,7 +12,6 @@ namespace Input
 
         // update background image for drawing,
         // img is the image that will be placed into the cell
-        Gdiplus::Image* img = nullptr;
         int x = cell.x*sideLen, y = cell.y*sideLen;
         
         // the value that will be returned. negative for unsuccessful execution,
@@ -25,7 +24,7 @@ namespace Input
             case 3: // tree
 
                 // empty grass tile drawn where the base is
-                img = emptyImg;
+                Frame::DrawImageToBitmap(background, emptyImg, x, y);
                 
                 // add a tree image to the overlay layer
                 Frame::AddTreeToOverlay(cell, updateBkgBrush);
@@ -43,10 +42,13 @@ namespace Input
                 if (grid[cell.x][cell.y]&0x4000 && updateBkgBrush) return -2;
 
                 // draw the background of the cell first
-                if (grid[cell.x][cell.y]&WATER) Frame::DrawImageToBitmap(background, waterImg, x, y);
+                if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
                 else Frame::DrawImageToBitmap(background, emptyImg, x, y);
 
-                img = logImg; // image drawn will be a log
+                // draw a log into the cell
+                Frame::DrawImageToBitmap(background, logImg, x, y);
+                
+                // update the grid value to represent a log
                 grid[cell.x][cell.y] |= LOG;
                 break;
 
@@ -57,12 +59,15 @@ namespace Input
                 if (grid[cell.x][cell.y]&0x4000 && updateBkgBrush) return -2;
 
                 // draw the background of the cell first
-                if (grid[cell.x][cell.y]&WATER) Frame::DrawImageToBitmap(background, waterImg, x, y);
+                if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
                 else Frame::DrawImageToBitmap(background, emptyImg, x, y);
 
-                img = bridgeImg;
+                // draw a bridge to the cell
+                Frame::DrawImageToBitmap(background, bridgeImg, x, y);
+
+                // update the grid value to represent a bridge
                 grid[cell.x][cell.y] |= BRIDGE;
-                grid[cell.x][cell.y] &= ~0x2000; // turn off barrier bit
+                grid[cell.x][cell.y] &= ~BARRIER; // turn off barrier bit
                 break;
 
 
@@ -71,9 +76,11 @@ namespace Input
                 // draw the empty tile first, in case of loading a map with a stump, but not a tree
                 Frame::DrawImageToBitmap(background, emptyImg, x, y);
 
+                // draw a stump to the cell
+                Frame::DrawImageToBitmap(background, stumpImg, x, y);
+
                 // only occurs when a tree gets removed, thus the cell could only have been TREE prior.
                 // so, there is no issue just settig the cell to STUMP, no need for |=
-                img = stumpImg;
                 grid[cell.x][cell.y] = STUMP;
                 break;
 
@@ -91,13 +98,16 @@ namespace Input
                     timedCells.push_back(cell);
                 } else {
                     // clear data about cell timer & health
-                    grid[cell.x][cell.y] &= ~TIMER;
-                    grid[cell.x][cell.y] &= ~HEALTH;
+                    grid[cell.x][cell.y] &= ~(TIMER|HEALTH);
                 }
 
-                // draw the empty tile first, in case of loading a map with a sapling, but not a tree
+                // draw the empty tile first
                 Frame::DrawImageToBitmap(background, emptyImg, x, y);
-                img = saplingImg;
+
+                // draw a sapling to the cell
+                Frame::DrawImageToBitmap(background, saplingImg, x, y);
+
+                // update the grid to represent a sapling
                 grid[cell.x][cell.y] |= SAPLING;
                 break;
             }
@@ -116,10 +126,20 @@ namespace Input
                         // spawn a log
                         Math::Vector2 pos(cell.x*sideLen, cell.y*sideLen);
                         Object::spawnItemStack(Object::Log_Item, pos, 1);
+
+                        // if the cell should be water by default, cover the cell with the water image
+                        // otherwise, cover it with the empty grass image
+                        if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
+                        else Frame::DrawImageToBitmap(background, emptyImg, x, y);
+
                         break;
                     }
 
                     case 2: // bridge
+                        // if the cell should be water by default, cover the cell with the water image
+                        // otherwise, cover it with the empty grass image
+                        if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
+                        else Frame::DrawImageToBitmap(background, emptyImg, x, y);
                         break;
 
                     case 3: { // tree
@@ -140,6 +160,11 @@ namespace Input
                         // spawn a log
                         Math::Vector2 pos(cell.x*sideLen, cell.y*sideLen);
                         Object::spawnItemStack(Object::Log_Item, pos, 1);
+
+                        // if the cell should be water by default, cover the cell with the water image
+                        // otherwise, cover it with the empty grass image
+                        if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
+                        else Frame::DrawImageToBitmap(background, emptyImg, x, y);
                         break;
                     }
 
@@ -152,16 +177,20 @@ namespace Input
                         int idx = findPointIndexInVector(cell, timedCells);
                         if (idx != -1) timedCells.erase(timedCells.begin() + idx);
 
+                        // if the cell should be water by default, cover the cell with the water image
+                        // otherwise, cover it with the empty grass image
+                        if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
+                        else Frame::DrawImageToBitmap(background, emptyImg, x, y);
                         break;
                     }
 
-                    default: break;
+                    default: 
+                        // if the cell should be water by default, cover the cell with the water image
+                        // otherwise, cover it with the empty grass image
+                        if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
+                        else Frame::DrawImageToBitmap(background, emptyImg, x, y);
+                        break;
                 }
-
-                // if the cell should be water by default, cover the cell with the water image
-                // otherwise, cover it with the empty grass image
-                if (grid[cell.x][cell.y]&WATER) img = waterImg;
-                else img = emptyImg;
 
                 // preserve bits 16 (indestructible), and 13, 17-24 (water), 
                 // all others to 0
@@ -173,14 +202,12 @@ namespace Input
             }
 
             default: 
-                // if the cell should be water, make it so, otherwise make it grass
-                if (grid[cell.x][cell.y]&WATER) img = waterImg;
-                else img = emptyImg;
+                // if the cell should be water by default, cover the cell with the water image
+                // otherwise, cover it with the empty grass image
+                if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
+                else Frame::DrawImageToBitmap(background, emptyImg, x, y);
                 break;
         }
-
-        // draw the object placed onto the image bitmap
-        if (img != nullptr) Frame::DrawImageToBitmap(background, img, x, y);
 
         // update the background brush, so that the change is observable
         if (updateBkgBrush) {

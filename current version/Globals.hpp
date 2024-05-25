@@ -68,9 +68,11 @@ namespace Globals {
     Gdiplus::TextureBrush * overlayBrush;
 
     Gdiplus::Image *logImg, *bridgeImg, *waterImg, *emptyImg, *hotbarImg, *treeImg, *wolfImg,
-    *falling_treeImg, *stumpImg, *Pine_ConeImg, *saplingImg;
+    *falling_treeImg, *stumpImg, *Pine_ConeImg, *saplingImg, *shoreline0Img, *shoreline1Img,
+    *shoreline2Img, *shoreline3Img, *shoreline4Img;
     Gdiplus::TextureBrush *logBrush, *bridgeBrush, *waterBrush, *grassBrush, *hotbarBrush, *treeBrush,
-    *wolfBrush, *falling_treeBrush, *stumpBrush, *Pine_ConeBrush, *saplingBrush;
+    *wolfBrush, *falling_treeBrush, *stumpBrush, *Pine_ConeBrush, *saplingBrush, *shoreline0Brush,
+    *shoreline1Brush, *shoreline2Brush, *shoreline3Brush, *shoreline4Brush;
 
     Object::Animations playerAnimations;
 

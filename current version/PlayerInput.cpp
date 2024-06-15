@@ -112,8 +112,53 @@ namespace Input
                 break;
             }
 
+            case 6: { // world border
+                Gdiplus::Graphics graphics(background);
+                // make the cell empty (black)
+                Gdiplus::SolidBrush *blackBrush = new Gdiplus::SolidBrush(black);
+                graphics.FillRectangle(blackBrush, x, y, (INT)sideLen, (INT)sideLen);
+                // cleanup
+                delete blackBrush;
+
+                // update the grid to represent a border
+                grid[cell.x][cell.y] = BORDER;
+                break;
+            }
+
+            case 7: { // closed door
+                // cell is occupied or water, AND the placement was made by player, not loading
+                if (grid[cell.x][cell.y]&0x5000 && updateBkgBrush) {
+                    if (grid[cell.x][cell.y]&255 != 8) return -2;
+                    else grid[cell.x][cell.y] = CLOSED_DOOR;
+                } else grid[cell.x][cell.y] |= CLOSED_DOOR;
+
+                // draw the empty tile first
+                Frame::DrawImageToBitmap(background, emptyImg, x, y);
+
+                // draw a closed door to the cell
+                Frame::DrawImageToBitmap(background, doorImg, x, y);
+                break;
+            }
+
+            case 8: { // open door
+                // cell is occupied or water, AND the placement was made by player, not loading
+                if (grid[cell.x][cell.y]&0x5000 && updateBkgBrush) {
+                    if ((grid[cell.x][cell.y]&255) != 7) return -2;
+                    else grid[cell.x][cell.y] = OPEN_DOOR;
+                } else grid[cell.x][cell.y] |= OPEN_DOOR;
+
+                // draw the empty tile first
+                Frame::DrawImageToBitmap(background, emptyImg, x, y);
+
+                // draw a closed door to the cell
+                Frame::DrawImageToBitmap(background, openDoorImg, x, y);
+                break;
+            }
+
             case EMPTY: 
             {
+                // cannot remove cells while holding an object
+                if (heldObject != nullptr && updateBkgBrush) return -4;
                 // remove building in the cell
                 // if it IS indestructible or NOT occupied, return
                 if (grid[cell.x][cell.y]&0x8000||!grid[cell.x][cell.y]&0x4000) return -3;
@@ -124,7 +169,7 @@ namespace Input
                 {
                     case 1: { // log
                         // spawn a log
-                        Math::Vector2 pos(cell.x*sideLen, cell.y*sideLen);
+                        Math::Vector2 pos(x, y);
                         Object::spawnItemStack(Object::Log_Item, pos, 1);
 
                         // if the cell should be water by default, cover the cell with the water image
@@ -135,12 +180,17 @@ namespace Input
                         break;
                     }
 
-                    case 2: // bridge
+                    case 2: { // bridge
+                        // spawn a bridge
+                        Math::Vector2 pos(x, y);
+                        Object::spawnItemStack(Object::Bridge_Item, pos, 1);
+
                         // if the cell should be water by default, cover the cell with the water image
                         // otherwise, cover it with the empty grass image
                         if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
                         else Frame::DrawImageToBitmap(background, emptyImg, x, y);
                         break;
+                    }
 
                     case 3: { // tree
 
@@ -176,6 +226,34 @@ namespace Input
                         // remove the cell from the timed cells vector
                         int idx = findPointIndexInVector(cell, timedCells);
                         if (idx != -1) timedCells.erase(timedCells.begin() + idx);
+
+                        // if the cell should be water by default, cover the cell with the water image
+                        // otherwise, cover it with the empty grass image
+                        if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
+                        else Frame::DrawImageToBitmap(background, emptyImg, x, y);
+                        break;
+                    }
+
+                    case 6: { // world border 
+                        return 0; // cannot be modified, exit the function
+                    }
+
+                    case 7: { // closed door
+                        // spawn a door
+                        Math::Vector2 pos(x, y);
+                        Object::spawnItemStack(Object::Door_Item, pos, 1);
+
+                        // if the cell should be water by default, cover the cell with the water image
+                        // otherwise, cover it with the empty grass image
+                        if (grid[cell.x][cell.y]&WATER) Frame::DrawWaterToCell(cell, x, y);
+                        else Frame::DrawImageToBitmap(background, emptyImg, x, y);
+                        break;
+                    }
+
+                    case 8: { // open door
+                        // spawn a door
+                        Math::Vector2 pos(x, y);
+                        Object::spawnItemStack(Object::Door_Item, pos, 1);
 
                         // if the cell should be water by default, cover the cell with the water image
                         // otherwise, cover it with the empty grass image
@@ -254,37 +332,55 @@ namespace Input
         // update global mouse pos, in case it somehow got misaligned ¯\_(ツ)_/¯
         mousePos = {x, y};
         mousePosREAL = Object::getWorldPosition(mousePos);
+        
 
-        // if an item is NOT held, the player may pick up an item stack
-        if (heldObject == nullptr) 
+        Math::Point2 cell = Object::findCell(mousePosREAL);
+        int val = grid[cell.x][cell.y]&255;
+        switch (val)
         {
-            // check all the game objects, to see which are items,
-            // and if they are clicked
-            for (int i = 0; i < gameObjects.size(); i++) 
-            {
-                Object::GameObject *obj = gameObjects[i];
-
-                // distance between object and player
-                float r = (obj->centrePos - player->centrePos).length();
-                if (r > interactRange) continue; // cannot interact with an object out of range
-
-                // rect representing the item stack entity
-                Gdiplus::Rect rect(obj->pos.x,  obj->pos.y, obj->size.x, obj->size.y);
-
-                // entity was clicked
-                if (isInRegion(mousePosREAL, rect))
-                {
-                    // make the player pick up the object, if possible
-                    setHeldObject(obj);
-
-                    // exit the function, the entity was clicked
-                    return;
-                }
+            case 7: { // clicked a closed door, open it
+                float r = (mousePosREAL - player->centrePos).length();
+                if (r <= interactRange) PlaceObjectInCell(cell, OPEN_DOOR);
+                break;
             }
+            case 8: { // clicked an open door, close it
+                float r = (mousePosREAL - player->centrePos).length();
+                if (r <= interactRange) PlaceObjectInCell(cell, CLOSED_DOOR);
+                break;
+            }
+            default: // didn't click anything important, interact with items
+                // if an item is NOT held, the player may pick up an item stack
+                if (heldObject == nullptr) 
+                {
+                    // check all the game objects, to see which are items,
+                    // and if they are clicked
+                    for (int i = 0; i < gameObjects.size(); i++) 
+                    {
+                        Object::GameObject *obj = gameObjects[i];
 
-        } else { 
-            // if an item IS held, throw it :)
-            throwHeldObject();
+                        // distance between object and player
+                        float r = (obj->centrePos - player->centrePos).length();
+                        if (r > interactRange) continue; // cannot interact with an object out of range
+
+                        // rect representing the item stack entity
+                        Gdiplus::Rect rect(obj->pos.x,  obj->pos.y, obj->size.x, obj->size.y);
+
+                        // entity was clicked
+                        if (isInRegion(mousePosREAL, rect))
+                        {
+                            // make the player pick up the object, if possible
+                            setHeldObject(obj);
+
+                            // exit the function, the entity was clicked
+                            return;
+                        }
+                    }
+
+                } else { 
+                    // if an item IS held, throw it :)
+                    throwHeldObject();
+                }
+                break;
         }
     }
 
@@ -300,7 +396,24 @@ namespace Input
         float r = (mousePosREAL - player->centrePos).length();
         if (r > interactRange) return; // clicked too far away, do nothing
 
+        if (heldObject == nullptr) 
+        {
+            // check to see if the player clicked on ANY entities
+            for (int i = 0; i < gameObjects.size(); i++)
+            {
+                Object::GameObject *obj = gameObjects[i];
+                // nothing happens when clicking on non items
+                if (obj->type < Object::Log_Item) continue;
 
+                Gdiplus::Rect objRect(obj->pos.x, obj->pos.y, obj->size.x, obj->size.y);
+                if (isInRegion(mousePosREAL, objRect)) { // right clicked an item stack
+                    // attemp to craft the item stack
+                    Object::GameObject *crafted = Object::craftItem(obj);
+                    // if successful, return
+                    if (crafted != nullptr) return;
+                }
+            }
+        }
         // find the cell the player selected
         Math::Point2 cell = Object::findCell(mousePosREAL);
 
@@ -333,7 +446,7 @@ namespace Input
                 break;
             case VK_F11:
                 // commented out for now bc bad, will work on this later :3
-                // ToggleFullscreen(hwnd, viewRect.Width, viewRect.Height); 
+                // ToggleFullscreen(hwnd, viewRect.Width, viewRect.Height);
                 break;
             case VK_F9:
                 debuggingTools ^= 1; break;
@@ -386,11 +499,26 @@ namespace Input
                 buildingType = SAPLING;
                 break;
 
+            case Object::Plank_Item:
+                // player cannot build anything haha nerd
+                buildingType = EMPTY;
+                break;
+
+            case Object::Bridge_Item:
+                buildingType = BRIDGE;
+                break;
+
+            case Object::Door_Item:
+                buildingType = CLOSED_DOOR;
+                break;
+
             default: return; // not an item, cannot be held
         }
 
         // reset any existing velocity/acceleration
         obj->velocity = obj->acceleration = Math::Zero2;
+        // reset the timer
+        obj->timer = 0.0f;
 
         // update the behaviour functions, so that the stack will be held by the player
         obj->positionFunc = Func::heldItemPositionFunc;
@@ -415,9 +543,19 @@ namespace Input
 
         // initiate the velocity in the direction of the mouse
         Math::Vector2 dir = Math::getUnitVector(obj->centrePos, mousePosREAL);
+
+        // copied form player position func
+        float s = player->speed; // store in a local variable, to save time loading from memory
+        if (inputKeys&16) s *= 2.0f; // bit 5 of inputKeys = shift, double move speed
+        if (debuggingTools&2) s *= 2.0f; // bit 2 of debugTools = speed boost, double speed
+
+        Math::Vector2 vel((bool(inputKeys&1)-bool(inputKeys&4)), (bool(inputKeys&2)-bool(inputKeys&8)));
+        vel.normalise(); 
+        vel *= s;
+
         // add player's velocity, so you can actually throw faster 
         // when throwing in your direction of motion
-        obj->velocity = player->velocity + (dir*100.0f);
+        obj->velocity = vel + player->velocity + (dir*130.0f);
 
         // set the acceleration, so it will eventually stop
         // set proportionally to the object's velocity

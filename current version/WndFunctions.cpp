@@ -10,6 +10,10 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
 
     Frame::InitialiseFrameCreation();
 
+    // set up the pathfinding stuff
+    int barrier = BARRIER;
+    AStar::Open(&grid, &barrier);
+
     HBRUSH bkg = CreateSolidBrush(RGB(255,255,255));
 
 
@@ -51,6 +55,7 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
         // sets the cursor
         SetCursor(cursor);
         
+
         // update DeltaTime
         deltaTime = Math::DeltaTime(&begin_time);
 
@@ -63,7 +68,13 @@ int WINAPI WndMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine,
         updateTimedCells();
 
         // update the global time
-        g_time += deltaTime;
+        if (!gameIsPaused) g_time += deltaTime;
+
+        // after 5 minutes (300s), toggle night, autosave, and time gets set back to 0
+        if (g_time > 300.0f) Game::toggleDayNightCycle();
+
+        // attempt to spawn enemies
+        Game::attemptEnemySpawn();
 
         TranslateMessage(&msg);
         DispatchMessage(&msg);
@@ -83,14 +94,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     switch (uMsg)
     {
         case WM_CREATE: {
-            // load the world from local storage
-            Storage::Level lvl = Storage::LoadLevelObjectFromFile("data/Default Level.txt");
-            LoadSceneFromLevelObject(lvl);
+            // load levels from local storage
+            loadAllLevels();
 
             // get device context for the window
             InitialiseOffscreenDC(hwnd);
             // draw the grid initially
             Frame::DrawWholeGrid();
+
+            // set up the graphics object associated with the offscreen DC
+            g_graphics = new Gdiplus::Graphics(hOffscreenDC);
             break;
         }
 
@@ -149,10 +162,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_DESTROY: {
-            Storage::Level lvl = SaveSceneToLevelObject();
-            int ext = Storage::SaveSceneToFile(lvl); 
+            // save the game before closing
+            // saveAllLevels();
 
             // cleanup
+            g_graphics->ReleaseHDC(hOffscreenDC);
+            delete g_graphics;
             DestroyAllResources(hwnd);
             PostQuitMessage(0);
             break;
@@ -248,19 +263,21 @@ void DestroyAllResources(HWND hwnd)
 
     // destroy all the image objects and bitmaps
     delete logImg; delete bridgeImg; delete waterImg; delete emptyImg;
-    delete hotbarImg; delete treeImg; delete wolfImg; 
-    delete falling_treeImg; delete stumpImg; delete Pine_ConeImg;
-    delete saplingImg; delete shoreline0Img; delete shoreline1Img;
-    delete shoreline2Img; delete shoreline3Img; delete shoreline4Img;
+    delete treeImg; delete wolfImg; delete falling_treeImg; 
+    delete stumpImg; delete Pine_ConeImg; delete saplingImg; 
+    delete shoreline0Img; delete shoreline1Img; delete shoreline2Img; 
+    delete shoreline3Img; delete shoreline4Img; delete plankImg;
+    delete doorImg; delete openDoorImg; delete CRT_baseImg;
 
-    delete overlay; delete background;
+    delete overlay; delete background; delete CRT;
 
     // destroy all the texture brushes
     delete logBrush; delete bridgeBrush; delete waterBrush; delete grassBrush;
-    delete hotbarBrush; delete treeBrush; delete wolfBrush;
-    delete falling_treeBrush; delete stumpBrush; delete Pine_ConeBrush;
-    delete saplingBrush; delete shoreline0Brush; delete shoreline1Brush;
-    delete shoreline2Brush; delete shoreline3Brush; delete shoreline4Brush;
+    delete treeBrush; delete wolfBrush; delete falling_treeBrush; 
+    delete stumpBrush; delete Pine_ConeBrush; delete saplingBrush; 
+    delete shoreline0Brush; delete shoreline1Brush; delete shoreline2Brush; 
+    delete shoreline3Brush; delete shoreline4Brush; delete plankBrush;
+    delete doorBrush; delete openDoorBrush; delete CRT_brush;
 
     delete bkgBrush; delete overlayBrush;
 

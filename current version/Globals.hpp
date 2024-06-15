@@ -11,6 +11,7 @@
 #include "GameMath.hpp"
 #include "GameObjects.hpp"
 #include "Storage.hpp"
+#include "PlayerInput.hpp"
 // had to include here to avoid compiler issues, NOT included in GameObjects.hpp
 #include "EntityFunctions.hpp"
 #include "Collisions.hpp"
@@ -20,12 +21,14 @@ namespace Globals {
 
     int wndWidth, wndHeight;
     int bkgWidth, bkgHeight;
-    Gdiplus::Rect viewRect(0, 0, 900, 600);
+    Gdiplus::Rect viewRect(0, 0, 1400, 788);
     HDC hOffscreenDC, g_hdc;
     HBITMAP hOffscreenBitmap;
     clock_t begin_time = clock();
+    Gdiplus::Graphics * g_graphics; // graphics object for drawing
 
     float g_time = 0.0f; // the current time in game, saved as a float
+    bool isNightTime = false; // whether or not it is currently night time
 
     float deltaTime = 0.0f;
     int prevFPS = 0;
@@ -67,21 +70,34 @@ namespace Globals {
     Gdiplus::Bitmap * overlay; // bitmap for the unmoving objects to be drawn above gameObjects
     Gdiplus::TextureBrush * overlayBrush;
 
-    Gdiplus::Image *logImg, *bridgeImg, *waterImg, *emptyImg, *hotbarImg, *treeImg, *wolfImg,
+    Gdiplus::Bitmap * CRT;
+
+    Gdiplus::Image *logImg, *bridgeImg, *waterImg, *emptyImg, *treeImg, *wolfImg,
     *falling_treeImg, *stumpImg, *Pine_ConeImg, *saplingImg, *shoreline0Img, *shoreline1Img,
-    *shoreline2Img, *shoreline3Img, *shoreline4Img;
-    Gdiplus::TextureBrush *logBrush, *bridgeBrush, *waterBrush, *grassBrush, *hotbarBrush, *treeBrush,
+    *shoreline2Img, *shoreline3Img, *shoreline4Img, *plankImg, *doorImg, *openDoorImg,
+    *CRT_baseImg;
+    Gdiplus::TextureBrush *logBrush, *bridgeBrush, *waterBrush, *grassBrush, *treeBrush,
     *wolfBrush, *falling_treeBrush, *stumpBrush, *Pine_ConeBrush, *saplingBrush, *shoreline0Brush,
-    *shoreline1Brush, *shoreline2Brush, *shoreline3Brush, *shoreline4Brush;
+    *shoreline1Brush, *shoreline2Brush, *shoreline3Brush, *shoreline4Brush, *plankBrush,
+    *doorBrush, *openDoorBrush, *CRT_brush;
 
     Object::Animations playerAnimations;
 
 
-    Object::GameObject * player;
+    Object::GameObject * player = nullptr;
     // object the player is holding
     Object::GameObject * heldObject = nullptr;
     // type of object player tries to put in a cell
     int buildingType = EMPTY;
+
+
+
+    // all of the levels in the game
+    Storage::Level *currLevel;
+    Storage::Level mainBaseArea;
+    Storage::Level testLevel;
+    bool sceneSwitch = false;
+
 
 
     // a vector containing all cells with time dependent functions (such as saplings)
@@ -98,11 +114,14 @@ namespace Globals {
 
     // text colours
     Gdiplus::Color white(255,255,255), red(255,0,0), green(0,255,0), blue(0,0,255), black(0,0,0);
-
+    // some more global brushes
+    Gdiplus::SolidBrush *pauseBrush, *nightBrush;
 
     Gdiplus::Bitmap * createEmptyBitmap(int width, int height);
     int LoadImages();
     void SetGrid();
+    void loadAllLevels();
+    void saveAllLevels();
 
 
     // finds the index of a point in a vector of points,
@@ -115,14 +134,17 @@ namespace Globals {
 
     // for loading/unloading a scene
     // loads the attributes of a level object into the global variables
-    void LoadSceneFromLevelObject(Storage::Level level);
+    void LoadSceneFromLevelObject(Storage::Level * level);
     // stores the global variables into a level object
-    Storage::Level SaveSceneToLevelObject();
+    void SaveSceneToLevelObject(Storage::Level *level);
 
     // loads the user's settings into global variables
     void LoadUserSettingsToObject(Storage::UserSettings settings);
     // saves settings globals into a UserSettings object
     Storage::UserSettings saveUserSettingsToObject();
+
+    // switches from the current scene to the specified one
+    void switchScene(Storage::Level * level);
 }
 
 #endif

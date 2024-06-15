@@ -8,6 +8,8 @@
 #include "EntityFunctions.cpp"
 #include "PlayerInput.cpp"
 #include "Storage.cpp"
+#include "GameFunctions.cpp"
+#include "AStarPathfinding.cpp"
 
 // open the exe
 int main() {

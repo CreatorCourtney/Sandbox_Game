@@ -4,12 +4,12 @@ namespace Globals
 {
     int LoadImages() 
     {
-        logImg = Gdiplus::Image::FromFile(L"images/Log.png");
+        logImg = Gdiplus::Image::FromFile(L"images/Buildings/Log.png");
         if (logImg->GetLastStatus() != Gdiplus::Ok) return 2;
         logBrush = new Gdiplus::TextureBrush(logImg);
         logBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
-        bridgeImg = Gdiplus::Image::FromFile(L"images/Bridge.png");
+        bridgeImg = Gdiplus::Image::FromFile(L"images/Buildings/Bridge.png");
         if (bridgeImg->GetLastStatus() != Gdiplus::Ok) return 2;
         bridgeBrush = new Gdiplus::TextureBrush(bridgeImg);
         bridgeBrush->SetWrapMode(Gdiplus::WrapModeClamp);
@@ -24,17 +24,12 @@ namespace Globals
         grassBrush = new Gdiplus::TextureBrush(emptyImg);
         grassBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
-        hotbarImg = Gdiplus::Image::FromFile(L"images/Hotbar.png");
-        if (hotbarImg->GetLastStatus() != Gdiplus::Ok) return 2;
-        hotbarBrush = new Gdiplus::TextureBrush(hotbarImg);
-        hotbarBrush->SetWrapMode(Gdiplus::WrapModeClamp);
-
         treeImg = Gdiplus::Image::FromFile(L"images/Tree/Tree.png");
         if (treeImg->GetLastStatus() != Gdiplus::Ok) return 2;
         treeBrush = new Gdiplus::TextureBrush(treeImg);
         treeBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
-        wolfImg = Gdiplus::Image::FromFile(L"images/Wolf.png");
+        wolfImg = Gdiplus::Image::FromFile(L"images/Entities/Wolf.png");
         if (wolfImg->GetLastStatus() != Gdiplus::Ok) return 2;
         wolfBrush = new Gdiplus::TextureBrush(wolfImg);
         wolfBrush->SetWrapMode(Gdiplus::WrapModeClamp);
@@ -49,7 +44,7 @@ namespace Globals
         stumpBrush = new Gdiplus::TextureBrush(stumpImg);
         stumpBrush->SetWrapMode(Gdiplus::WrapModeClamp);
 
-        Pine_ConeImg = Gdiplus::Image::FromFile(L"images/Tree/Pine_Cone.png");
+        Pine_ConeImg = Gdiplus::Image::FromFile(L"images/Items/Pine_Cone.png");
         if (Pine_ConeImg->GetLastStatus() != Gdiplus::Ok) return 2;
         Pine_ConeBrush = new Gdiplus::TextureBrush(Pine_ConeImg);
         Pine_ConeBrush->SetWrapMode(Gdiplus::WrapModeClamp);
@@ -84,38 +79,66 @@ namespace Globals
         shoreline4Brush = new Gdiplus::TextureBrush(shoreline4Img);
         shoreline4Brush->SetWrapMode(Gdiplus::WrapModeClamp);
 
+        plankImg = Gdiplus::Image::FromFile(L"images/Items/Plank.png");
+        if (plankImg->GetLastStatus() != Gdiplus::Ok) return 2;
+        plankBrush = new Gdiplus::TextureBrush(plankImg);
+        plankBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        doorImg = Gdiplus::Image::FromFile(L"images/Buildings/Door.png");
+        if (doorImg->GetLastStatus() != Gdiplus::Ok) return 2;
+        doorBrush = new Gdiplus::TextureBrush(doorImg);
+        doorBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        openDoorImg = Gdiplus::Image::FromFile(L"images/Buildings/Open_Door.png");
+        if (openDoorImg->GetLastStatus() != Gdiplus::Ok) return 2;
+        openDoorBrush = new Gdiplus::TextureBrush(openDoorImg);
+        openDoorBrush->SetWrapMode(Gdiplus::WrapModeClamp);
+
+        CRT_baseImg = Gdiplus::Image::FromFile(L"images/CRT_Base_Texture.png");
+        if (CRT_baseImg->GetLastStatus() != Gdiplus::Ok) return 2;
+        int x = CRT_baseImg->GetWidth(), y = CRT_baseImg->GetHeight();
+        CRT = createEmptyBitmap(x, y);
+        Gdiplus::Graphics graphics(CRT);
+        graphics.DrawImage(CRT_baseImg, 0, 0, x, y);
+        Frame::setBitmapAlpha(CRT, 20);
+        CRT_brush = new Gdiplus::TextureBrush(CRT);
+
         // load player animations
         {
             std::vector<Gdiplus::TextureBrush*> front, back, left, right;
             float Ft = 1.0f, Bt = 1.0f, Lt = 1.0f, Rt = 1.0f;
-            for (int i = 0; i < 12; i++) {
-                std::wstring txt = L"images/Player/front/" + std::to_wstring(i) + L".png";
+            for (int i = 0; i < 4; i++) {
+                std::wstring txt = L"images/Entities/Player/front/" + std::to_wstring(i) + L".png";
                 Gdiplus::Image * img = Gdiplus::Image::FromFile(txt.c_str());
                 Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
                 front.push_back(brush);
                 // cleanup
                 delete img;
             }
-            for (int i = 0; i < 12; i++) {
-                std::wstring txt = L"images/Player/back/" + std::to_wstring(i) + L".png";
+            for (int i = 0; i < 4; i++) {
+                std::wstring txt = L"images/Entities/Player/back/" + std::to_wstring(i) + L".png";
                 Gdiplus::Image * img = Gdiplus::Image::FromFile(txt.c_str());
                 Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
                 back.push_back(brush);
                 // cleanup
                 delete img;
             }
-            for (int i = 0; i < 12; i++) {
-                std::wstring txt = L"images/Player/right/" + std::to_wstring(i) + L".png";
+            for (int i = 0; i < 4; i++) {
+                std::wstring txt = L"images/Entities/Player/right/" + std::to_wstring(i) + L".png";
                 Gdiplus::Image * img = Gdiplus::Image::FromFile(txt.c_str());
                 Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
                 right.push_back(brush);
                 // cleanup
                 delete img;
             }
-            for (int i = 0; i < 12; i++) {
-                std::wstring txt = L"images/Player/left/" + std::to_wstring(i) + L".png";
+            for (int i = 0; i < 4; i++) {
+                std::wstring txt = L"images/Entities/Player/left/" + std::to_wstring(i) + L".png";
                 Gdiplus::Image * img = Gdiplus::Image::FromFile(txt.c_str());
                 Gdiplus::TextureBrush *brush = new Gdiplus::TextureBrush(img);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
                 left.push_back(brush);
                 // cleanup
                 delete img;
@@ -129,8 +152,17 @@ namespace Globals
     void SetGrid()
     {
         bkgWidth = sideLen * grid.size(); bkgHeight = sideLen * grid[0].size();
-        background = createEmptyBitmap(bkgWidth, bkgHeight);
-        overlay = createEmptyBitmap(bkgWidth, bkgHeight);
+        Gdiplus::Bitmap *newBackground = createEmptyBitmap(bkgWidth, bkgHeight),
+                        *newOverlay = createEmptyBitmap(bkgWidth, bkgHeight);
+
+        if (newBackground->GetLastStatus() == Gdiplus::Ok) {
+            delete background; // clean up the old background image
+            background = newBackground;
+        }
+        if (newOverlay->GetLastStatus() == Gdiplus::Ok) {
+            delete overlay; // clean up the old overlay image
+            overlay = newOverlay;
+        }
     }
 
     Gdiplus::Bitmap * createEmptyBitmap(int width, int height)
@@ -145,6 +177,40 @@ namespace Globals
         return bmp;
     }
 
+
+    void loadAllLevels()
+    {
+        mainBaseArea = Storage::LoadLevelObjectFromFile("saves/Main Base.txt");
+        testLevel = Storage::LoadLevelObjectFromFile("saves/Test Level.txt");
+
+        // set the level object's pointers, so you can walk from level to level
+        mainBaseArea.below = &testLevel;
+        testLevel.above = &mainBaseArea;
+
+        mainBaseArea.setExitPos(Math::Zero2, {0.5f, 0.05f}, Math::Zero2, Math::Zero2);
+        testLevel.setExitPos({0.166667f, 0.95f}, Math::Zero2, Math::Zero2, Math::Zero2);
+
+
+        // search for the level that has a loaded player; this will be the starting scene
+        Storage::Level *loadLevel = nullptr;
+        if (mainBaseArea.player != nullptr) loadLevel = &mainBaseArea;
+        else if (testLevel.player != nullptr) loadLevel = &testLevel;
+
+        LoadSceneFromLevelObject(loadLevel);
+    }
+
+    void saveAllLevels()
+    {
+        // find the active level, and assign globals into that level object
+        // i wish i could use a switch statement here, but strings cannot be used
+        // in switch statements. else if chain it is :(
+        if (currLevel == &mainBaseArea) SaveSceneToLevelObject(&mainBaseArea);
+        else if (currLevel == &testLevel) SaveSceneToLevelObject(&testLevel);
+
+        // save all levels into local storage
+        Storage::SaveSceneToFile(mainBaseArea);
+        Storage::SaveSceneToFile(testLevel);
+    }
 
 
     // finds the index of a point in a vector of points,
@@ -181,22 +247,8 @@ namespace Globals
             {
                 case 5: // sapling
 
-                    // growth condition met
-                    if (((int)g_time%saplingTime)==0) 
-                    {
-                        // because the exact amount of time passed won't always be an exact integer,
-                        // currTimer will be incremented when g_time is close ENOUGH to an integer
-                        
-                        // d = amount of time from last INTEGER
-                        float d = g_time - (int)g_time;
-
-                        if (d <= 0.01f) // margin of error
-                            currTimer++; // increment the time when successful
-                    }
-
-                    
-                    if (currTimer >= 10) 
-                    {
+                    // saplings grow at the beginning of each day
+                    if (g_time == 0.0f && !isNightTime) {
                         // when the sapling grows, a tree will be placed in the cell
                         Input::PlaceObjectInCell(cell, TREE);
 
@@ -219,44 +271,49 @@ namespace Globals
             // update the actual grid
             grid[cell.x][cell.y] = cellInfo;
         }
+
+        // do the same process for the level objects
+        if (currLevel != &mainBaseArea) Game::updateTimedCells(&mainBaseArea);
+        if (currLevel != &testLevel) Game::updateTimedCells(&testLevel);
     }
 
 
     // loads the attributes of a level object into the global variables
-    void LoadSceneFromLevelObject(Storage::Level level)
+    void LoadSceneFromLevelObject(Storage::Level * level)
     {
         // load information about the player
-        player = level.player; // load the player itself
-        heldObject = level.heldObject; // load the object the player is holding
-        buildingType = level.buildingType; // load what the player is building with
+        player = level->player; // load the player itself
+        heldObject = level->heldObject; // load the object the player is holding
+        buildingType = level->buildingType; // load what the player is building with
+        if (heldObject != nullptr) Input::setHeldObject(heldObject);
 
         // load information about the rest of the scene
-        gameObjects = level.gameObjects; // load all of the game objects
+        gameObjects = level->gameObjects; // load all of the game objects
 
         // load information about the map
-        sideLen = level.sideLen; // load the dimensions of each cell
+        sideLen = level->sideLen; // load the dimensions of each cell
         interactRange = interactRangeCells * sideLen; // set the interaction radius
-        grid = level.grid; // load the array of all cells
+        grid = level->grid; // load the array of all cells
 
-        // put all timed cells in the timedCells vector
+        // update the global pointer letting the game know which level is loaded
+        currLevel = level;
 
-        // set the current time
-        g_time = level.time;
 
         // initialise the background/overlay images
         SetGrid();
+        Frame::DrawWholeGrid();
     }
     
     // stores the global variables into a level object
-    Storage::Level SaveSceneToLevelObject()
+    void SaveSceneToLevelObject(Storage::Level *level)
     {
-        // create a level object using global variables
-        Storage::Level scene(player, heldObject, buildingType,
-            gameObjects, sideLen, grid, g_time);
-
-
-        // return the level object created
-        return scene;
+        // save all the individual attributes
+        level->player = player; level->heldObject = heldObject;
+        level->buildingType = buildingType;
+        level->gameObjects = gameObjects; level->sideLen = sideLen;
+        level->grid = grid; 
+        level->lvlName = currLevel->lvlName;
+        level->timedCells = timedCells;
     }
 
     // loads the user's settings into global variables
@@ -274,5 +331,26 @@ namespace Globals
 
         // reutrn the settings object created
         return settings;
+    }
+
+
+    // switches from the current scene to the specified one
+    void switchScene(Storage::Level * level)
+    {
+        if (level->player == nullptr) {
+            level->player = Object::Instantiate(Object::Player, player->pos, player->hp, &level->gameObjects);
+            Object::Destroy(player); player = nullptr;
+        }
+
+        // find the active level, and assign globals into that level object
+        // i wish i could use a switch statement here, but strings cannot be used
+        // in switch statements. else if chain it is :(
+        if (currLevel == &mainBaseArea) SaveSceneToLevelObject(&mainBaseArea);
+        else if (currLevel == &testLevel) SaveSceneToLevelObject(&testLevel);
+        
+        // load the specified level into the global scene
+        LoadSceneFromLevelObject(level);
+
+        sceneSwitch = true;
     }
 }

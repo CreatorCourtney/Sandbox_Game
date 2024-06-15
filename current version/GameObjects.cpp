@@ -37,14 +37,13 @@ namespace Object
             case Player:
                 // assign texture variables
                 animations = playerAnimations;
-                srcDimensions = {25, 25};
+                srcDimensions = {10, 10};
                 size = Math::Point2(50*g_scale, 50*g_scale);
                 // animation script
                 animationScript = Func::playerAnimationScript;
 
                 // attributes
                 hasAnimation = true;
-                cellularDimensions = {1, 1, size.x, size.y};
                 hasCollision = true;
                 radius = Math::Max(size.x/2, size.y/2);
                 centrePos = pos + Math::Vector2(size.x/2, size.y/2);
@@ -52,33 +51,32 @@ namespace Object
                 speed = 100.0f*g_scale;
                 
                 // behaviour functions
-                velocityFunc = Func::playerVelocityFunc;
-                positionFunc = Func::defaultPositionFunc;
-                collisionFunc = Collisions::defaultCollisionFunction;
+                velocityFunc = Func::deccelerateVelocityFunc;
+                positionFunc = Func::playerPositionFunc;
+                collisionFunc = Collisions::playerCollisionFunction;
 
                 // misc
-                // set the interaction radius
-                interactRange = interactRangeCells * sideLen;
                 cell = findCell(centrePos);
                 break;
 
             case Wolf:
                 // assign texture variables
-                brush = wolfBrush;
+                brush = new Gdiplus::TextureBrush(wolfImg);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
                 srcDimensions = {50, 50};
-                size = Math::Point2(75*g_scale, 75*g_scale);
+                size = Math::Point2(50*g_scale, 50*g_scale);
                 // animation script
                 animationScript = Func::noAnimation;
 
                 // attributes
-                hasCollision = true;
+                hasCollision = false;
                 radius = Math::Max(size.x/2, size.y/2);
                 centrePos = pos + Math::Vector2(size.x/2, size.y/2);
                 maxHP = 3;
-                speed = 80.0f*g_scale;
+                speed = 120.0f*g_scale;
                 
                 // behaviour functions
-                velocityFunc = Func::wolfVelocityFunc;
+                velocityFunc = Func::wolfSpawningFunc;
                 positionFunc = Func::defaultPositionFunc;
                 collisionFunc = Collisions::defaultCollisionFunction;
 
@@ -89,7 +87,8 @@ namespace Object
             case Falling_Tree:
                 // assign texture variables
                 srcDimensions = {250, 250};
-                brush = falling_treeBrush;
+                brush = new Gdiplus::TextureBrush(falling_treeImg);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
                 size = Math::Point2(10*sideLen, 10*sideLen);
                 // animation script
                 animationScript = Func::treeFallingAnimations;
@@ -113,22 +112,23 @@ namespace Object
 
             case Log_Item:
                 // assgign texture variables
-                srcDimensions = {50, 50};
-                brush = logBrush;
+                srcDimensions = {20, 20};
+                brush = new Gdiplus::TextureBrush(logImg);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
                 size = Math::Point2(40*g_scale, 40*g_scale);
                 // animation script
                 animationScript = Func::noAnimation;
 
                 // attributes
                 centrePos = pos + Math::Vector2(size.x/2, size.y/2);
-                maxHP = 15; // up to 15 logs can stack together
+                maxHP = 5; // up to 5 logs can stack together
                 hasCollision = true;
                 radius = Math::Max(size.x/2, size.y/2);
                 // items use speed as a way to scale their damage when thrown
-                speed = 1.0f;
+                speed = 0.5f;
 
                 // behaviour functions
-                velocityFunc = Func::defaultVelocityFunc;
+                velocityFunc = Func::deccelerateVelocityFunc;
                 positionFunc = Func::thrownItemPositionFunc;
                 collisionFunc = Collisions::stationaryItemCollisionFunction;
 
@@ -138,22 +138,101 @@ namespace Object
 
             case Pine_Cone_Item:
                 // assign texture variables
-                srcDimensions = {25, 25};
-                brush = Pine_ConeBrush;
+                srcDimensions = {10, 10};
+                brush = new Gdiplus::TextureBrush(Pine_ConeImg);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
                 size = Math::Point2(40*g_scale, 40*g_scale);
                 // animation script
                 animationScript = Func::noAnimation;
 
                 // attributes
                 centrePos = pos + Math::Vector2(size.x/2, size.y/2);
-                maxHP = 5; // up to 5 pine cones can stack
+                maxHP = 6; // up to 6 pine cones can stack
+                radius = Math::Max(size.x/2, size.y/2);
+                hasCollision = true;
+                // items use speed as a way to scale their damage when thrown
+                speed = 0.33333333f;
+
+                // behaviour functions
+                velocityFunc = Func::deccelerateVelocityFunc;
+                positionFunc = Func::thrownItemPositionFunc;
+                collisionFunc = Collisions::stationaryItemCollisionFunction;
+
+                // misc
+                cell = findCell(centrePos);
+                break;
+
+            case Plank_Item:
+                // assign texture variables
+                srcDimensions = {10, 10};
+                brush = new Gdiplus::TextureBrush(plankImg);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
+                size = Math::Point2(40*g_scale, 40*g_scale);
+                // animation script
+                animationScript = Func::noAnimation;
+
+                // attributes
+                centrePos = pos + Math::Vector2(size.x/2, size.y/2);
+                maxHP = 10;
                 radius = Math::Max(size.x/2, size.y/2);
                 hasCollision = true;
                 // items use speed as a way to scale their damage when thrown
                 speed = 0.5f;
 
                 // behaviour functions
-                velocityFunc = Func::defaultVelocityFunc;
+                velocityFunc = Func::deccelerateVelocityFunc;
+                positionFunc = Func::thrownItemPositionFunc;
+                collisionFunc = Collisions::stationaryItemCollisionFunction;
+
+                // misc
+                cell = findCell(centrePos);
+                break;
+
+            case Bridge_Item:
+                // assign texture variables
+                srcDimensions = {20, 20};
+                brush = new Gdiplus::TextureBrush(bridgeImg);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
+                size = Math::Point2(40*g_scale, 40*g_scale);
+                // animation script
+                animationScript = Func::noAnimation;
+
+                // attributes
+                centrePos = pos + Math::Vector2(size.x/2, size.y/2);
+                maxHP = 8;
+                radius = Math::Max(size.x/2, size.y/2);
+                hasCollision = true;
+                // items use speed as a way to scale their damage when thrown
+                speed = 0.5f;
+
+                // behaviour functions
+                velocityFunc = Func::deccelerateVelocityFunc;
+                positionFunc = Func::thrownItemPositionFunc;
+                collisionFunc = Collisions::stationaryItemCollisionFunction;
+
+                // misc
+                cell = findCell(centrePos);
+                break;
+
+            case Door_Item:
+                // assign texture variables
+                srcDimensions = {20, 20};
+                brush = new Gdiplus::TextureBrush(doorImg);
+                brush->SetWrapMode(Gdiplus::WrapModeClamp);
+                size = Math::Point2(40*g_scale, 40*g_scale);
+                // animation script
+                animationScript = Func::noAnimation;
+
+                // attributes
+                centrePos = pos + Math::Vector2(size.x/2, size.y/2);
+                maxHP = 4;
+                radius = Math::Max(size.x/2, size.y/2);
+                hasCollision = true;
+                // items use speed as a way to scale their damage when thrown
+                speed = 0.5f;
+
+                // behaviour functions
+                velocityFunc = Func::deccelerateVelocityFunc;
                 positionFunc = Func::thrownItemPositionFunc;
                 collisionFunc = Collisions::stationaryItemCollisionFunction;
 
@@ -167,39 +246,21 @@ namespace Object
                 scaleY = (float)size.y/(float)srcDimensions.y;
         brushScaleMatrix = new Gdiplus::Matrix(scaleX, 0.0f, 0.0f, scaleY, 0.0f, 0.0f);
 
-        
+
         // assigning the number of cells, and space between collision points
-        if (Type != Player) {
-            int numX = size.x/sideLen+1, numY = size.y/sideLen+1,
-                stepX = (float)size.x/(float)numX, stepY = (float)size.y/(float)numY;
-            cellularDimensions = {numX, numY, stepX, stepY};
-        }
-
-
-        // preemptively set the brushes so that they don't wrap, thus drawing the image only once
-        for (int i = 0; i < animations.front.size(); i++) {
-            if (animations.front[i]->GetLastStatus() == Gdiplus::Ok)
-            animations.front[i]->SetWrapMode(Gdiplus::WrapModeClamp);
-        }
-        for (int i = 0; i < animations.back.size(); i++) {
-            if (animations.back[i]->GetLastStatus() == Gdiplus::Ok)
-            animations.back[i]->SetWrapMode(Gdiplus::WrapModeClamp);
-        }
-        for (int i = 0; i < animations.left.size(); i++) {
-            if (animations.left[i]->GetLastStatus() == Gdiplus::Ok)
-            animations.left[i]->SetWrapMode(Gdiplus::WrapModeClamp);
-        }
-        for (int i = 0; i < animations.right.size(); i++) {
-            if (animations.right[i]->GetLastStatus() == Gdiplus::Ok)
-            animations.right[i]->SetWrapMode(Gdiplus::WrapModeClamp);
-        }
-        if (!hasAnimation && brush->GetLastStatus() == Gdiplus::Ok) 
-            brush->SetWrapMode(Gdiplus::WrapModeClamp);
+        int numX = size.x/sideLen+1, numY = size.y/sideLen+1,
+            stepX = (float)size.x/(float)numX, stepY = (float)size.y/(float)numY;
+        cellularDimensions = {numX, numY, stepX, stepY};
     }
 
     // draws the object to the graphics object
     void GameObject::draw(Gdiplus::Graphics& graphics)
     {
+        // for visualising pathfinding
+        // for (AStar::LinkedCell *curr = pathNode; curr != nullptr; curr = curr->next) {
+        //     Frame::shadeCell(graphics, curr->cell);
+        // }
+
         // position of the object on the screen
         Math::Point2 screenPos = getScreenPosition(pos);
         // offscreen, dont render
@@ -220,9 +281,12 @@ namespace Object
     void GameObject::update() 
     {
         if (gameIsPaused) return; // do nothing when the game is paused
+        // when the player gets updated, update the position of
+        // the camera based on the player's position
+        if (this == player) updateBkg();
 
         // kill objects with 0 health
-        if (hp <= 0) {
+        if (hp <= 0 && type != Player) {
             Destroy(this);
             return;
         } else hp = Math::Min(hp, maxHP);
@@ -231,9 +295,6 @@ namespace Object
         positionFunc(this); // update position
         collisionFunc(this); // handle collisions
 
-        // when the player gets updated, update the position of
-        // the camera based on the player's position
-        if (this == player) updateBkg();
     }
 
     // updates the position of the camera based on the player's position
@@ -377,16 +438,22 @@ namespace Object
 
 
     // for instantiating game objects. returns a reference to the object created
-    GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp)
+    GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp, std::vector<GameObject*> *vec)
     {
         // create the object
-        GameObject *obj = new GameObject(pos, Math::Vector2(0.0f, 0.0f), type, hp, gameObjects.size());
+        GameObject *obj = new GameObject(pos, Math::Vector2(0.0f, 0.0f), type, hp, vec->size());
         // add it to the game objects vector
-        gameObjects.push_back(obj);
+        vec->push_back(obj);
 
         // return the reference to the game object just created
         return obj;
     }
+
+    // for convenience
+    GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp) {
+        return Instantiate(type, pos, hp, &gameObjects);
+    }
+
 
     // deltes the specified object
     void Destroy(GameObject * obj)
@@ -438,22 +505,40 @@ namespace Object
 
         // cleanup object's resources
         obj->deallocateResources();
+        obj = nullptr;
     }
 
     // cleanup function
     void GameObject::deallocateResources()
     {
-        // currently, all of the images used for drawing are stored in global
-        // variables which wil be reused by other iterations of the object. don't delete
-        // these until the application closes, as other objects will need to
-        // use these resources
+        // delete the entity's brush object
+        if (brush != nullptr) delete brush;
 
         // free the matrix for brush scaling
         delete brushScaleMatrix;
 
+        // clean up any pathfinding nodes
+        AStar::LinkedCell *curr = pathNode;
+        while (curr != nullptr) {
+            AStar::LinkedCell *next = curr->next;
+            delete curr;
+            curr = next;
+        }
+            
+
         // delete the object itself
-        delete this;
+        // for some reason, this delete causes issues when destroying the player
+        // when skipped, the game functions totally fine. the leak is small, and only happens when
+        // walking from scene to scene. I'm fucking leaving it okay
+        if (type != Player) delete this;
     }
+
+
+
+
+
+
+
 
     // spawns an item stack with random velocity. return a reference to the item created
     GameObject* spawnItemStack(EntityType type, Math::Vector2 pos, int count)
@@ -479,5 +564,113 @@ namespace Object
 
         // return a reference to the item stack created
         return obj;
+    }
+
+
+    // when right clicking an item stack, it may be crafted into another type of item
+    // returns a pointer to the new crafted item
+    GameObject* craftItem(GameObject *stack)
+    {
+        // can't craft by right clicking held object
+        if (stack == heldObject) return nullptr;
+        GameObject *res = nullptr;
+        // which type of item will be created
+        switch (stack->type)
+        {
+            case Log_Item: { // one log may be crafted into two planks
+                // ensure there IS at least one log
+                if (stack->hp > 0) {
+                    // spawn a stack of two planks on the log stack
+                    res = spawnItemStack(Plank_Item, stack->pos, 2);
+                    res->timer = 0.75f;
+                    stack->hp--; // lose one log in crafting
+                }
+                break;
+            }
+
+            case Bridge_Item: {
+                // bridges may be deconstructed back into 4 planks and 2 logs
+                res = spawnItemStack(Log_Item, stack->pos, 2);
+                res->timer = 0.75f;
+                res = spawnItemStack(Plank_Item, stack->pos, 4);
+                res->timer = 0.75f;
+                stack->hp--;
+                break;
+            }
+
+            case Plank_Item: { // four planks may be crafted into one door
+                // ensure there IS four planks
+                if (stack->hp >= 4) {
+                    // spawn a door on the plank stack
+                    res = spawnItemStack(Door_Item, stack->pos, 1);
+                    res->timer = 0.75f;
+                    stack->hp -= 4; // lose 4 planks in crafting
+                }
+                break;
+            }
+
+            case Door_Item: {
+                // doors may be deconstructed into four planks
+                res = spawnItemStack(Plank_Item, stack->pos, 4);
+                res->timer = 0.75f;
+                stack->hp--;
+                break;
+            }
+
+            default: break; // nothing can be crafted
+        }
+        return res;
+    }
+
+
+    // when throwing two different item stacks together, they may combine, and produce
+    // a third, different items. returns a pointer to the crafted item
+    GameObject* craftTwoItems(GameObject *stack1, GameObject *stack2)
+    {
+        // make sure neither object is being held, and neither has a positive timer
+        if (stack1 == heldObject || stack2 == heldObject ||
+            stack1->timer > 0.0f || stack2->timer > 0.0f) return nullptr;
+        GameObject *res = nullptr;
+
+        switch (stack1->type)
+        {
+            case Log_Item:
+                switch (stack2->type)
+                {
+                    case Plank_Item:
+                        // 2 logs and 4 planks craft one bridge
+                        // make sure there are adequate resources
+                        if (stack1->hp>=2 && stack2->hp>=4) {
+                            // spawn one bridge item
+                            res = spawnItemStack(Bridge_Item, stack1->pos, 1);
+                            // reduce the hp of the other item stacks
+                            stack1->hp -= 2; stack2->hp -= 4;
+                        }
+                        break;
+
+                    default: break;
+                }
+                break;
+
+            case Plank_Item:
+                switch (stack2->type)
+                {
+                    case Log_Item:
+                        // 2 logs and 4 planks craft one bridge
+                        // make sure there are adequate resources
+                        if (stack1->hp>=4 && stack2->hp>=2) {
+                            // spawn one bridge item
+                            res = spawnItemStack(Bridge_Item, stack1->pos, 1);
+                            // reduce the hp of the other item stacks
+                            stack1->hp -= 4; stack2->hp -= 2;
+                        }
+                        break;
+
+                    default: break;
+                }
+                break;
+        }
+
+        return res;
     }
 }

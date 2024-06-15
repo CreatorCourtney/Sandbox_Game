@@ -7,6 +7,7 @@
 #include <WinUser.h>
 
 #include "PlayerInput.hpp"
+#include "GameFunctions.hpp"
 
 // main window display function
 int WINAPI WndMain(

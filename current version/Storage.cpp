@@ -5,15 +5,19 @@ namespace Storage
     // constructor
     Level::Level(Object::GameObject *Player, Object::GameObject *HeldObject, int BuildingType,
         std::vector<Object::GameObject*> GameObjects, float SideLen, 
-        std::vector<std::vector<int>> Grid, float Time) : 
+        std::vector<std::vector<int>> Grid) : 
     player(Player), heldObject(HeldObject), buildingType(BuildingType), 
-    gameObjects(GameObjects), sideLen(SideLen), grid(Grid), time(Time) 
+    gameObjects(GameObjects), sideLen(SideLen), grid(Grid) 
     {
         // assign the grid dimensions with the .size() function
         gridX = grid.size();
         // before checking the size of grid[0], make sure grid[0] actually exists, to avoid a crash
         gridY = (gridX>0)? grid[0].size() : 0;
+
+        setExitPos(Math::Zero2, Math::Zero2, Math::Zero2, Math::Zero2);
     }
+
+    Level::Level() {};
 
 
     // constructor
@@ -27,7 +31,7 @@ namespace Storage
     {
         // open the specified file for writing
         std::fstream file;
-        file.open("data/"+scene.lvlName+".txt", std::ios::out);
+        file.open("saves/"+scene.lvlName+".txt", std::ios::out);
         if (!file) return -1; // validate the file
 
         int ext = 0;
@@ -38,17 +42,17 @@ namespace Storage
         // since the player and held object are stored with the rest of the game objects,
         // just store their indices here, and they can be found later. the held objects index is
         // -1 if it doesn't exist
-        int idxPlayer = scene.player->idx, 
+        int idxPlayer = (scene.player == nullptr)? -1 : scene.player->idx, 
             idxHeld = (scene.heldObject == nullptr)? -1 : scene.heldObject->idx;
-        // put the indices, building type, and time on one line
+        // put the indices, and building type on one line
         file << idxPlayer <<'\t'<< idxHeld <<'\t' 
-             <<std::hex<<scene.buildingType <<'\t'<< std::dec<<scene.time<<'\n';
+             <<std::hex<<scene.buildingType <<'\n';
 
         // in one line, save the number of gameObjects in the scene.
         // in the next num lines, save all the game objects in the scene
         int num = scene.gameObjects.size();
 
-        file << num <<'\n';
+        file <<std::dec<<num <<'\n';
         for (int i = 0; i < num; i++) {
             ext = SaveGameObjectToFile(&file, scene.gameObjects[i]);
             if (ext != 0) return ext;
@@ -106,10 +110,10 @@ namespace Storage
     // takes the information stored in a file and loads it into a level object
     Level LoadLevelObjectFromFile(std::string filename)
     {
-        // std::cout << "here\n";
         std::ifstream file(filename);
         if (!file) {
             std::cout << "Couldn't open " <<filename <<'\n';
+            return Level();
         }
 
         // get the level's name from the first line
@@ -127,10 +131,8 @@ namespace Storage
 
         // the four numbers held on this line
         int idxPlayer, idxHeld, buildType;
-        float time;
         // take in these values, remember that the building type is stored in hexdec
-        iss >> std::dec>>idxPlayer >> idxHeld 
-            >> std::hex>>buildType >>std::dec>>time;
+        iss >> std::dec>>idxPlayer >> idxHeld >> std::hex>>buildType;
 
 
         // get the next line of the file (should just be one int)
@@ -222,7 +224,19 @@ namespace Storage
         }
 
         // create a level object will all the collected attributes
-        Level lvl(player, held, buildType, lvlObjects, sideLen, grid, time);
+        Level lvl(player, held, buildType, lvlObjects, sideLen, grid);
+        lvl.lvlName = lvlName;
+
+        std::vector<Math::Point2> timed;
+        for (int x = 0; x < nx; x++) {
+            for (int y = 0; y < ny; y++) {
+                if (grid[x][y]&HAS_TIMER) {
+                    // is a timed cell, add it to the vector
+                    timed.push_back(Math::Point2(x,y));
+                }
+            }
+        }
+        lvl.timedCells = timed;
 
         // close the file
         file.close();
@@ -283,5 +297,9 @@ namespace Storage
         obj->radius = radius;
 
         return obj;
+    }
+
+    void Level::setExitPos(Math::Vector2 above, Math::Vector2 Below, Math::Vector2 Left, Math::Vector2 Right) {
+        posAbove = above; posBelow = Below; posLeft = Left; posRight = Right;
     }
 }

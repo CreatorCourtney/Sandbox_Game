@@ -57,6 +57,11 @@ namespace Frame
     // places a string of text on the graphics object at (x, y)
     void placeText(int x, int y, std::wstring text, 
     Gdiplus::Color colour, int size, Gdiplus::Graphics& graphics);
+
+
+
+    // changes the alpha value of all the pixels in a bitmap. used for the CRT effect
+    void setBitmapAlpha(Gdiplus::Bitmap *bitmap, BYTE alpha);
 }
 
 #endif

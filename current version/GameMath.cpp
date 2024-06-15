@@ -76,6 +76,22 @@ namespace Math
         return x!=other.x || y!=other.y;
     }
 
+    void Vector2::operator+=(Vector2 const& other) {
+        x += other.x; y += other.y;
+    }
+    void Vector2::operator-=(Vector2 const& other) {
+        x -= other.x; y -= other.y;
+    }
+    void Vector2::operator/=(float const& k) {
+        x /= k; y /= k;
+    }
+    void Vector2::operator*=(float const& k) {
+        x *= k; y *= k;
+    }
+
+
+
+
     // constructors for Point2; assign x and y
     Point2::Point2(int X, int Y) : x(X), y(Y) {}
     // make x and y both 0 by default
@@ -100,6 +116,13 @@ namespace Math
         // normalise the displacement vector to get a unit vector
         return disp.normalised();
     }
+
+
+    // finds the hadamard product of two vectors
+    Vector2 hadamard(Vector2 v0, Vector2 v1) {
+        return Vector2(v0.x*v1.x, v0.y*v1.y);
+    }
+
 
     // time passed since begin_time
     float DeltaTime(clock_t * begin_time)
@@ -131,10 +154,40 @@ namespace Math
     float absf(float a) { // abs for ints
         return (a<0.0f)? -a : a;
     }
+    int Abs(int a) { // abs for ints
+        return (a<0)? -a : a;
+    }
 
     float clampf(float min, float max, float x) { // clamps x between a min and max value
         if (x<min) return min; // return min if x is below the desired range
         return (max<x)? max : x; // return max if x is too large, otherwise don't change x
+    }
+    int Clamp(int min, int max, int x) {// clamp for ints
+        if (x<min) return min;
+        return (max<x)? max : x;
+    }
+
+    int ceilToInt(float a) {
+        int n = (int)a;
+        return ((float)n == a)? n : n+1;
+    }
+
+    float signf(float a) { // finds the sign of a float
+        return (a < 0.0f)? -1.0f : 1.0f;
+    }
+    int Sign(int a) { // sign for ints
+        return (a < 1)? -1 : 1;
+    }
+
+
+    // counts the number of active bits in a variable
+    int numBits(int var) {
+        int count = 0;
+        while (var) {
+            if (var%2) count++;
+            var >>= 1;
+        }
+        return count;
     }
 }
 

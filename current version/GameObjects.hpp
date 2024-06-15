@@ -10,6 +10,7 @@
 #include "GameMath.hpp"
 #include "Globals.hpp"
 #include "FrameCreation.hpp"
+#include "AStarPathfinding.hpp"
 
 // cell types
 /* BYTE DECOMPOSITION:
@@ -49,11 +50,14 @@ byte 4:
 #define HEALTH          0b00000000000000000000111100000000
 #define SHORELINE       0b00000000111111110000000000000000
 
-#define LOG             0b00000001000000000110100000000001 // 8 health
-#define BRIDGE          0b00000001000000000100001100000010 // 3 health
-#define TREE            0b00000000000000000110000000000011 // not destructible
-#define STUMP           0b00000001000000000110100000000100 // 8 health
-#define SAPLING         0b00000011000000000110001000000101 // 2 health
+#define LOG             0b00000001000000000110100000000001 // 8  health
+#define BRIDGE          0b00000001000000000100001100000010 // 3  health
+#define TREE            0b00000001000000000110110000000011 // 12 health
+#define STUMP           0b00000001000000000110100000000100 // 8  health
+#define SAPLING         0b00000011000000000110001000000101 // 2  health
+#define BORDER          0b00000000000000001110000000000110 // not destructible
+#define CLOSED_DOOR     0b00000001000000000110011000000111 // 6 health
+#define OPEN_DOOR       0b00000001000000000100011000001000 // 6 health
 
 
 namespace Object
@@ -67,7 +71,10 @@ namespace Object
 
         // item stack entities
         Log_Item, // 3
-        Pine_Cone_Item // 4
+        Pine_Cone_Item, // 4
+        Plank_Item, // 5
+        Bridge_Item, // 6
+        Door_Item, // 7
     };
 
     // object to store images for game object animation
@@ -118,14 +125,19 @@ namespace Object
 
         EntityType type; // which type of entity it is
         Animations animations; // images used for animating
-        Gdiplus::TextureBrush* brush; // if the entity has no animations, this constant brush is used for drawing
+        Gdiplus::TextureBrush* brush = nullptr; // if the entity has no animations, this constant brush is used for drawing
         
+
+        // the head of a linked list of cells, used for pathfinding
+        AStar::LinkedCell *pathNode = nullptr;
+        int pathfindLength = 0; // the length of the linked list
+
 
         // for managing associated entities
         GameObject* owner = nullptr;
         std::vector<GameObject*> ownedObjects; 
 
-        
+        int damage = 0; // how much damage the entity can dish out
         int hp, maxHP; // object's health/health cap
         float speed; // scalar movement speed
         int idx; // index of the object in the gameObjects vector
@@ -198,14 +210,27 @@ namespace Object
 
 
     // for instantiating game objects. returns a reference to the object created
+    GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp, std::vector<GameObject*> *vec);
+    // for convenience
     GameObject* Instantiate(EntityType type, Math::Vector2 pos, int hp);
 
     // deletes the specified object
     void Destroy(GameObject * obj);
 
+
+
+
     
     // spawns an item stack with random velocity. return a reference to the item created
     GameObject* spawnItemStack(EntityType type, Math::Vector2 pos, int count);
+
+    // when right clicking an item stack, it may be crafted into another type of item
+    // returns a pointer to the new crafted item
+    GameObject* craftItem(GameObject *stack);
+
+    // when throwing two different item stacks together, they may combine, and produce
+    // a third, different items. returns a pointer to the crafted item
+    GameObject* craftTwoItems(GameObject *stack1, GameObject *stack2);
 }
 
 #endif
